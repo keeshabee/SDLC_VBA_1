@@ -1,3 +1,13 @@
+The VBA runs fine. but the numbers are still off in every cell so it's either Brooke is counting differently or the cut off date she used for the 2025 counts is different from what I used (which is all 2025 in the current Sheet 1). My manual of all 2025 dates matches the 'Entered' columns for both judgment and qualifications. Prepare an email for Brooke to inquire about this and ask the following questions. Write the questions illustratively so she is could understand what I am trying to convey.
+
+Questions
+1. Up to what date was your count based on?
+2. Are you using the filed or entered date count?
+3. I also noticed there are multiple entries under the same docket, for example: #136364, ATL, Row #3532). It looks like two entries indicating same judgment dates and same qualifications dates (different from each other). Are they being counted as 1 or 2?
+4. Other questions for clarification and data validation.
+
+
+
 Option Explicit
 
 '=========================================================================
