@@ -1,13 +1,3 @@
-The VBA runs fine. but the numbers are still off in every cell so it's either Brooke is counting differently or the cut off date she used for the 2025 counts is different from what I used (which is all 2025 in the current Sheet 1). My manual of all 2025 dates matches the 'Entered' columns for both judgment and qualifications. Prepare an email for Brooke to inquire about this and ask the following questions. Write the questions illustratively so she is could understand what I am trying to convey.
-
-Questions
-1. Up to what date was your count based on?
-2. Are you using the filed or entered date count?
-3. I also noticed there are multiple entries under the same docket, for example: #136364, ATL, Row #3532). It looks like two entries indicating same judgment dates and same qualifications dates (different from each other). Are they being counted as 1 or 2?
-4. Other questions for clarification and data validation.
-
-
-
 Option Explicit
 
 '=========================================================================
@@ -17,8 +7,26 @@ Option Explicit
 ' Epic: EPIC-288383
 ' Author: Rigel, BI Data Specialist, DARSRS
 ' Created: December 2024
+' Updated: December 10, 2024 - Per Brooke's clarifications
 ' Purpose: Automate collection and calculation of 2025 running counts for
 '          judgments, qualification documents, and six report types by county
+'
+' BUSINESS RULES (Per Brooke - December 10, 2024):
+' 1. Frequency: Run nearest Monday on or after the 15th (once per month)
+' 
+' 2. Judgment & Qualification Counting Logic:
+'    STEP 1: Filter by Judgment Filed (Column G) = 2025
+'    STEP 2: For rows where Judgment Filed is 2025, count:
+'      - Judgments: Count 1 (because Column G is in 2025)
+'      - Qualifications: Count if Column I OR J has ANY date (regardless of year)
+'    
+' 3. Six Report Types (INDEPENDENT of Judgment filter):
+'    - Count each report type's FILED column (K, M, O, Q, U, W)
+'    - Count if date is in 2025
+'    - Do NOT apply Judgment filter to these
+'    - Each report type counted independently
+'
+' 4. Duplicate Handling: To be clarified (pending Brooke's response)
 '
 ' Requirements: See Business Requirements Document v2.0
 ' User Stories: US-001 through US-007
@@ -323,54 +331,58 @@ Private Sub CountDatesForAllCounties(ByRef ws As Worksheet, ByVal lastRow As Lon
         If county <> "" And county <> "COUNTY" And countyData.Exists(county) Then
             Set dataDict = countyData(county)
             
-            ' US-001: Count Judgments (Columns G, H)
-            ' Count case once if EITHER Filed OR Entered date is in target year
-            If IsDate2025(ws.Cells(i, 7).Value, targetYear) Or _
-               IsDate2025(ws.Cells(i, 8).Value, targetYear) Then
-                dataDict("Judgments") = dataDict("Judgments") + 1
-            End If
+            ' US-001 & US-002: Count Judgments and Qualification Documents
+            ' Per Brooke's Clarification (December 2024):
+            ' 1. FIRST: Check if Judgment Filed (Column G) is in 2025
+            ' 2. IF YES: Count columns H, I, J regardless of their year
             
-            ' US-002: Count Qualification Documents (Columns I, J)
-            ' Count case once if EITHER Filed OR Entered date is in target year
-            If IsDate2025(ws.Cells(i, 9).Value, targetYear) Or _
-               IsDate2025(ws.Cells(i, 10).Value, targetYear) Then
-                dataDict("QualDocs") = dataDict("QualDocs") + 1
+            Dim hasJudgment2025 As Boolean
+            hasJudgment2025 = IsDate2025(ws.Cells(i, 7).Value, targetYear)  ' Column G - Judgment Filed
+            
+            If hasJudgment2025 Then
+                ' Count this case as 1 Judgment (because G is in 2025)
+                dataDict("Judgments") = dataDict("Judgments") + 1
+                
+                ' Now count Qual Docs (Columns I, J) regardless of year
+                ' Count if EITHER Column I OR Column J has ANY date
+                If (IsDate(ws.Cells(i, 9).Value) And Not IsEmpty(ws.Cells(i, 9).Value)) Or _
+                   (IsDate(ws.Cells(i, 10).Value) And Not IsEmpty(ws.Cells(i, 10).Value)) Then
+                    dataDict("QualDocs") = dataDict("QualDocs") + 1
+                End If
             End If
             
             ' US-004: Count Individual Report Types
-            ' INVENTORY RPT (Columns K, L)
-            If IsDate2025(ws.Cells(i, 11).Value, targetYear) Or _
-               IsDate2025(ws.Cells(i, 12).Value, targetYear) Then
+            ' Per Brooke: INDEPENDENT of Judgment filter
+            ' Count each report type's FILED column (K, M, O, Q, U, W) if date is in 2025
+            ' Do NOT apply judgment filter here
+            
+            ' INVENTORY RPT (Column K - Filed)
+            If IsDate2025(ws.Cells(i, 11).Value, targetYear) Then
                 dataDict("Inventory") = dataDict("Inventory") + 1
             End If
             
-            ' WELL BEING RPT (Columns M, N)
-            If IsDate2025(ws.Cells(i, 13).Value, targetYear) Or _
-               IsDate2025(ws.Cells(i, 14).Value, targetYear) Then
+            ' WELL BEING RPT (Column M - Filed)
+            If IsDate2025(ws.Cells(i, 13).Value, targetYear) Then
                 dataDict("WellBeing") = dataDict("WellBeing") + 1
             End If
             
-            ' SOCIAL SECURITY REP PAYEE RPT (Columns O, P)
-            If IsDate2025(ws.Cells(i, 15).Value, targetYear) Or _
-               IsDate2025(ws.Cells(i, 16).Value, targetYear) Then
+            ' SOCIAL SECURITY REP PAYEE RPT (Column O - Filed)
+            If IsDate2025(ws.Cells(i, 15).Value, targetYear) Then
                 dataDict("SocSecRepPayee") = dataDict("SocSecRepPayee") + 1
             End If
             
-            ' EZ ACCOUNTING RPT (Columns Q, R)
-            If IsDate2025(ws.Cells(i, 17).Value, targetYear) Or _
-               IsDate2025(ws.Cells(i, 18).Value, targetYear) Then
+            ' EZ ACCOUNTING RPT (Column Q - Filed)
+            If IsDate2025(ws.Cells(i, 17).Value, targetYear) Then
                 dataDict("EZAccounting") = dataDict("EZAccounting") + 1
             End If
             
-            ' ANNUAL REPORT (Columns U, V)
-            If IsDate2025(ws.Cells(i, 21).Value, targetYear) Or _
-               IsDate2025(ws.Cells(i, 22).Value, targetYear) Then
+            ' ANNUAL REPORT (Column U - Filed)
+            If IsDate2025(ws.Cells(i, 21).Value, targetYear) Then
                 dataDict("AnnualReport") = dataDict("AnnualReport") + 1
             End If
             
-            ' COMPREHENSIVE ACCOUNTING RPT (Columns W, X)
-            If IsDate2025(ws.Cells(i, 23).Value, targetYear) Or _
-               IsDate2025(ws.Cells(i, 24).Value, targetYear) Then
+            ' COMPREHENSIVE ACCOUNTING RPT (Column W - Filed)
+            If IsDate2025(ws.Cells(i, 23).Value, targetYear) Then
                 dataDict("ComprehensiveAcct") = dataDict("ComprehensiveAcct") + 1
             End If
         End If
