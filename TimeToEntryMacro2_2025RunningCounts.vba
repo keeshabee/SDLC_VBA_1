@@ -483,4 +483,103 @@ Private Sub WriteTotalsRow(ByRef ws As Worksheet, ByVal rowNum As Long, ByRef co
     Dim totalComprehensive As Long
     
     Dim county As Variant
-    Dim dataDict As 
+    Dim dataDict As Object
+    
+    For Each county In countyData.Keys
+        Set dataDict = countyData(county)
+        
+        totalJudgments = totalJudgments + dataDict("Judgments")
+        totalQualDocs = totalQualDocs + dataDict("QualDocs")
+        totalInventory = totalInventory + dataDict("Inventory")
+        totalWellBeing = totalWellBeing + dataDict("WellBeing")
+        totalSocSec = totalSocSec + dataDict("SocSecRepPayee")
+        totalEZAcct = totalEZAcct + dataDict("EZAccounting")
+        totalAnnual = totalAnnual + dataDict("AnnualReport")
+        totalComprehensive = totalComprehensive + dataDict("ComprehensiveAcct")
+    Next county
+    
+    ' Column C: Total Judgments
+    ws.Cells(rowNum, 3).Value = totalJudgments
+    ws.Cells(rowNum, 3).Font.Bold = True
+    
+    ' Column D: Total Qualification Documents
+    ws.Cells(rowNum, 4).Value = totalQualDocs
+    ws.Cells(rowNum, 4).Font.Bold = True
+    
+    ' Column E: Overall Percentage (recalculated, not summed)
+    If totalJudgments > 0 Then
+        ws.Cells(rowNum, 5).Formula = "=IF(C" & rowNum & ",D" & rowNum & "/C" & rowNum & ",0)"
+        ws.Cells(rowNum, 5).NumberFormat = "0%"
+    Else
+        ws.Cells(rowNum, 5).Value = "--"
+    End If
+    ws.Cells(rowNum, 5).Font.Bold = True
+    
+    ' Column F: "Average %" label
+    ws.Cells(rowNum, 6).Value = "Average %"
+    ws.Cells(rowNum, 6).Font.Bold = True
+    
+    ' Report type totals
+    ws.Cells(rowNum, 8).Value = totalInventory
+    ws.Cells(rowNum, 8).Font.Bold = True
+    
+    ws.Cells(rowNum, 10).Value = totalWellBeing
+    ws.Cells(rowNum, 10).Font.Bold = True
+    
+    ws.Cells(rowNum, 12).Value = totalSocSec
+    ws.Cells(rowNum, 12).Font.Bold = True
+    
+    ws.Cells(rowNum, 14).Value = totalEZAcct
+    ws.Cells(rowNum, 14).Font.Bold = True
+    
+    ws.Cells(rowNum, 16).Value = totalAnnual
+    ws.Cells(rowNum, 16).Font.Bold = True
+    
+    ws.Cells(rowNum, 18).Value = totalComprehensive
+    ws.Cells(rowNum, 18).Font.Bold = True
+    
+    ' Column S: "TOTAL ALL REPORTS" label
+    ws.Cells(rowNum, 19).Value = "TOTAL ALL REPORTS"
+    ws.Cells(rowNum, 19).Font.Bold = True
+    
+    ' Column T: Sum of ALL report columns (H, J, L, N, P, R) - GMP Reviewable total
+    ws.Cells(rowNum, 20).Formula = "=SUM(H" & rowNum & ",J" & rowNum & ",L" & rowNum & ",N" & rowNum & ",P" & rowNum & ",R" & rowNum & ")"
+    ws.Cells(rowNum, 20).Font.Bold = True
+    
+    ' Add top border to TOTALS row
+    ws.Range(ws.Cells(rowNum, 1), ws.Cells(rowNum, 20)).Borders(xlEdgeTop).Weight = xlMedium
+End Sub
+
+Private Sub FormatOutputSheet(ByRef ws As Worksheet, ByVal lastRow As Long)
+    '=====================================================================
+    ' Apply formatting to the output sheet
+    '=====================================================================
+    
+    ' Format percentage column
+    ws.Range("E3:E" & lastRow).NumberFormat = "0%"
+    
+    ' Format number columns with thousand separator
+    Dim numCols As Variant
+    numCols = Array(3, 4, 8, 10, 12, 14, 16, 18, 20)  ' C, D, H, J, L, N, P, R, T
+    
+    Dim i As Integer
+    For i = LBound(numCols) To UBound(numCols)
+        ws.Columns(numCols(i)).NumberFormat = "#,##0"
+    Next i
+    
+    ' Auto-fit columns
+    ws.Columns("A:T").AutoFit
+    
+    ' Center align county names
+    ws.Range("A3:A" & lastRow).HorizontalAlignment = xlCenter
+    
+    ' Right align numeric data
+    For i = LBound(numCols) To UBound(numCols)
+        ws.Columns(numCols(i)).HorizontalAlignment = xlRight
+    Next i
+End Sub
+
+'=========================================================================
+' END OF MACRO
+'=========================================================================
+
