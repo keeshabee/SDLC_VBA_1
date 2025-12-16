@@ -1,0 +1,235 @@
+# Correct Counting Logic - Visual Guide
+
+**Updated:** December 10, 2024  
+**Per Brooke's Clarification**
+
+---
+
+## **The Correct Logic Flow**
+
+```
+FOR EACH ROW in Sheet1:
+
+┌─────────────────────────────────────────────────────────────────┐
+│ STEP 1: Check Judgment Filed (Column G)                        │
+│ Question: Is Column G date in 2025?                            │
+└─────────────────────────────────────────────────────────────────┘
+                    │
+        ┌───────────┴───────────┐
+        │                       │
+    YES (2025)              NO (not 2025)
+        │                       │
+        ▼                       ▼
+┌───────────────────┐   ┌──────────────────┐
+│ Count Judgments:  │   │ Skip Judgments & │
+│ +1 for this row   │   │ Qualifications   │
+│                   │   └──────────────────┘
+│ Then check:       │
+│ Qualifications    │
+│ (Columns I, J)    │
+└───────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ STEP 2: Count Qualifications (REGARDLESS OF YEAR)              │
+│ Question: Does Column I OR Column J have ANY date?             │
+│                                                                 │
+│ Column I (Qual Filed):  Could be 2020, 2023, 2025, any year   │
+│ Column J (Qual Entered): Could be 2020, 2023, 2025, any year  │
+│                                                                 │
+│ If EITHER has a date → Count +1 Qualification                  │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ STEP 3: Count 6 Report Types (INDEPENDENT)                     │
+│ DO NOT check Judgment filter for these!                        │
+│                                                                 │
+│ For EACH report type, independently:                           │
+│ - Check if FILED column has 2025 date                          │
+│ - If YES → Count +1 for that report type                       │
+│                                                                 │
+│ Column K (Inventory Filed): 2025? → Count                      │
+│ Column M (Well Being Filed): 2025? → Count                     │
+│ Column O (Soc Sec Filed): 2025? → Count                        │
+│ Column Q (EZ Acct Filed): 2025? → Count                        │
+│ Column U (Annual Filed): 2025? → Count                         │
+│ Column W (Comprehensive Filed): 2025? → Count                  │
+└─────────────────────────────────────────────────────────────────┘
+
+NEXT ROW
+```
+
+---
+
+## **Example Scenarios**
+
+### **Example 1: Typical 2025 Case**
+
+| Column | Header | Value | Result |
+|--------|--------|-------|--------|
+| G | Judgment Filed | 2025-03-15 | ✅ Judgment COUNTED |
+| H | Judgment Entered | 2025-04-01 | ℹ️ Not used (but OK, still counts Judgment) |
+| I | Qual Docs Filed | 2025-05-10 | ✅ Qualification COUNTED (has a date) |
+| J | Qual Docs Entered | 2025-06-05 | ℹ️ Not used (but OK, still counts Qual) |
+| K | Inventory Filed | 2025-07-20 | ✅ Inventory COUNTED (2025) |
+
+**Result:** 1 Judgment, 1 Qualification, 1 Inventory
+
+---
+
+### **Example 2: Judgment 2025, Qual Docs Old Year**
+
+| Column | Header | Value | Result |
+|--------|--------|-------|--------|
+| G | Judgment Filed | 2025-01-10 | ✅ Judgment COUNTED |
+| H | Judgment Entered | 2025-02-01 | ℹ️ Not used |
+| I | Qual Docs Filed | 2022-08-15 | ✅ Qualification COUNTED (any year OK!) |
+| J | Qual Docs Entered | 2022-09-20 | ℹ️ Not used |
+| K | Inventory Filed | 2024-12-10 | ❌ Inventory NOT counted (not 2025) |
+
+**Result:** 1 Judgment, 1 Qualification, 0 Inventory
+
+**Key Point:** Qualification still counts even though it's from 2022!
+
+---
+
+### **Example 3: Judgment NOT 2025**
+
+| Column | Header | Value | Result |
+|--------|--------|-------|--------|
+| G | Judgment Filed | 2024-12-30 | ❌ Judgment NOT counted (not 2025) |
+| H | Judgment Entered | 2025-01-05 | ℹ️ Not used (doesn't matter) |
+| I | Qual Docs Filed | 2025-01-10 | ❌ Qualification NOT counted (Judgment not 2025) |
+| J | Qual Docs Entered | 2025-02-01 | ℹ️ Not used |
+| K | Inventory Filed | 2025-03-15 | ✅ Inventory COUNTED (2025, independent) |
+
+**Result:** 0 Judgments, 0 Qualifications, 1 Inventory
+
+**Key Point:** Even though Qual Docs and Inventory are 2025, Qualification doesn't count because Judgment Filed is not 2025. But Inventory still counts because it's independent!
+
+---
+
+### **Example 4: Judgment 2025, No Qual Docs**
+
+| Column | Header | Value | Result |
+|--------|--------|-------|--------|
+| G | Judgment Filed | 2025-02-01 | ✅ Judgment COUNTED |
+| H | Judgment Entered | 2025-03-10 | ℹ️ Not used |
+| I | Qual Docs Filed | *empty* | ❌ No Qualification (no date) |
+| J | Qual Docs Entered | *empty* | ℹ️ Not used |
+| K | Inventory Filed | *empty* | ❌ No Inventory (no date) |
+
+**Result:** 1 Judgment, 0 Qualifications, 0 Inventory
+
+---
+
+## **The Key Differences**
+
+### **❌ WRONG (What We Had Before):**
+
+```
+Judgments: Count if Column G OR H is 2025
+Qualifications: Count if Column I OR J is 2025
+Reports: Count if Filed OR Entered is 2025
+```
+
+### **✅ CORRECT (What Brooke Wants):**
+
+```
+Judgments: 
+  1. First filter: Is Column G in 2025?
+  2. If YES → Count 1 Judgment
+  
+Qualifications:
+  1. Did this row count as a Judgment? (Column G = 2025)
+  2. If YES → Does Column I OR J have ANY date (any year)?
+  3. If YES → Count 1 Qualification
+  
+Reports (INDEPENDENT):
+  1. Ignore Judgment filter
+  2. Is Filed column (K, M, O, Q, U, W) in 2025?
+  3. If YES → Count that report type
+```
+
+---
+
+## **Code Logic in Plain English**
+
+```
+For each row:
+    
+    // Check Judgment first
+    IF Column G (Judgment Filed) has a 2025 date THEN
+        Increment Judgment count by 1
+        
+        // Now check Qualifications (only if Judgment was 2025)
+        IF Column I has any date OR Column J has any date THEN
+            Increment Qualification count by 1
+        END IF
+    END IF
+    
+    // Check Reports independently (don't care about Judgment)
+    IF Column K (Inventory Filed) has 2025 date THEN
+        Increment Inventory count by 1
+    END IF
+    
+    IF Column M (Well Being Filed) has 2025 date THEN
+        Increment Well Being count by 1
+    END IF
+    
+    // ... same for other 4 report types
+    
+Next row
+```
+
+---
+
+## **Why This Makes Sense**
+
+**Judgment & Qualifications are related:**
+- You only count Qualifications for cases that have a 2025 Judgment
+- This creates a "parent-child" relationship
+- Judgment = parent (must be 2025)
+- Qualification = child (any year, but only if parent exists)
+
+**Reports are independent:**
+- A report can be filed in 2025 even if the Judgment is from 2020
+- Each report type is tracked separately
+- No dependency on Judgment dates
+
+---
+
+## **Expected Impact on Counts**
+
+Compared to the previous version:
+
+**Judgments:** Should DECREASE
+- Before: Counted if G=2025 OR H=2025
+- Now: Only count if G=2025
+
+**Qualifications:** Depends on data
+- Before: Counted if I=2025 OR J=2025
+- Now: Only count if (G=2025) AND (I or J has any date)
+- Could increase (all years) or decrease (must have 2025 Judgment)
+
+**Reports:** Should stay about the same
+- Before: Independent, Filed only, 2025
+- Now: Independent, Filed only, 2025
+- No change in logic
+
+---
+
+## **Testing Checklist**
+
+After running the updated macro:
+
+- [ ] Compare Judgment totals to Brooke's manual count
+- [ ] Compare Qualification totals to Brooke's manual count
+- [ ] Check percentage calculations (Qual / Judgment)
+- [ ] Verify Report Type counts look reasonable
+- [ ] Spot-check 3 random counties manually
+- [ ] Confirm TOTALS row matches expected values
+
+---
+
+**This is the correct logic now! Run the macro and validate.** 🎯
