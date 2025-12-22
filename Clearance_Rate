@@ -1,0 +1,29 @@
+Subject: Ready to Start Clearance Rate Macro - Quick Clarifications Needed
+
+Hi Brooke,
+
+I'm ready to start working on the Clearance Rate macro (Macro #3). I have the Master_Completed New Report Reviews file and sample exports from Report Review for weeks 10/20-10/26 and 10/27-11/2, so I'm all set on the data side.
+
+I just need a few quick clarifications before I start building:
+
+**Workflow Questions:**
+- Which day of the week do you typically run these reports? (I know you mentioned it, but I want to make sure I have it right)
+- Do your weeks run Sunday-Saturday, Monday-Sunday, or another schedule?
+- Should the macro calculate one week at a time or handle multiple weeks at once?
+
+**Confirming the Data Logic:**
+From our call and looking at the Time to Entry data, the four financial reports that go to volunteers are:
+1. Inventory (Column L - Entered)
+2. EZ Accounting (Column R - Entered)
+3. Annual Report (Column V - Entered)
+4. Comprehensive Accounting (Column X - Entered)
+
+Can you confirm that:
+- These are the correct columns (L, R, V, X)?
+- I should be using the **Entered** dates (when uploaded to system), not Filed dates?
+- Unlike Macros 1 and 2, these reports should NOT be filtered by the 2025 Judgment dates - they should count all reports entered within the week regardless of when judgments were filed, correct?
+
+Once I have these confirmations, I can start building. Let me know if you'd prefer a quick call to discuss!
+
+Thanks,
+Keisha
