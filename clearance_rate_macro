@@ -1,0 +1,169 @@
+PART 2B: CREATE THE COUNTIES ARRAY (HELPER CODE)
+-----------------------------------
+At the very top of Module1, type this:
+
+```vba
+Option Explicit
+
+' Global array of all 21 NJ counties
+Public Function GetAllCounties() As Variant
+    GetAllCounties = Array("Atlantic", "Bergen", "Burlington", "Camden", _
+                           "Cape May", "Cumberland", "Essex", "Gloucester", _
+                           "Hudson", "Hunterdon", "Mercer", "Middlesex", _
+                           "Monmouth", "Morris", "Ocean", "Passaic", _
+                           "Salem", "Somerset", "Sussex", "Union", "Warren")
+End Function
+```
+
+Purpose: This function returns all 21 county names so you don't have to type them repeatedly.
+
+PART 2C: CREATE THE DATE RANGE CHECKER FUNCTION
+-----------------------------------
+Below the GetAllCounties function, add this:
+
+```vba
+' Helper function to check if a date falls within a range
+Function InDateRange(checkDate As Variant, startDate As Date, endDate As Date) As Boolean
+    ' Handle empty/null dates
+    If IsEmpty(checkDate) Or checkDate = 0 Then
+        InDateRange = False
+        Exit Function
+    End If
+    
+    Dim dateValue As Date
+    On Error Resume Next
+    dateValue = CDate(checkDate)
+    On Error GoTo 0
+    
+    ' Check if date is within range
+    If dateValue >= startDate And dateValue <= endDate Then
+        InDateRange = True
+    Else
+        InDateRange = False
+    End If
+End Function
+```
+
+Purpose: This checks if a date falls within your Monday-Sunday week range.
+Handles: Empty cells, null values, invalid dates
+
+PART 2D: CREATE THE MAIN CountWeeklyUploads FUNCTION
+-----------------------------------
+Below the InDateRange function, add this:
+
+```vba
+' Main function to count weekly uploads from Time to Entry data
+Function CountWeeklyUploads(wsData As Worksheet, startDate As Date, endDate As Date) As Object
+    '=================================================================
+    ' Purpose: Count how many of the 4 financial reports were uploaded
+    '          by each county during the specified week
+    ' Columns: L (Inventory), R (EZ Acct), V (Annual), X (Comprehensive)
+    ' Returns: Dictionary with county names and upload counts
+    '=================================================================
+    
+    Dim countDict As Object
+    Set countDict = CreateObject("Scripting.Dictionary")
+    
+    ' Initialize all 21 counties with 0 count
+    Dim counties As Variant
+    counties = GetAllCounties()
+    
+    Dim i As Integer
+    For i = 0 To UBound(counties)
+        countDict(counties(i)) = 0
+    Next i
+    
+    ' Find last row with data
+    Dim lastRow As Long
+    lastRow = wsData.Cells(wsData.Rows.Count, "A").End(xlUp).Row
+    
+    ' Loop through each row of data
+    Dim rowNum As Long
+    Dim county As String
+    Dim invEntered As Variant, ezEntered As Variant
+    Dim annEntered As Variant, compEntered As Variant
+    
+    For rowNum = 2 To lastRow  ' Start at row 2 (assuming row 1 is headers)
+        county = Trim(wsData.Cells(rowNum, 1).Value)  ' Column A
+        
+        ' Skip if county is empty or not in our list
+        If county = "" Then GoTo NextRow
+        If Not countDict.Exists(county) Then GoTo NextRow
+        
+        ' Get all 4 ENTERED dates
+        invEntered = wsData.Cells(rowNum, 12).Value   ' Column L - Inventory
+        ezEntered = wsData.Cells(rowNum, 18).Value    ' Column R - EZ Accounting
+        annEntered = wsData.Cells(rowNum, 22).Value   ' Column V - Annual
+        compEntered = wsData.Cells(rowNum, 24).Value  ' Column X - Comprehensive
+        
+        ' Count each report type if entered this week
+        If InDateRange(invEntered, startDate, endDate) Then
+            countDict(county) = countDict(county) + 1
+        End If
+        
+        If InDateRange(ezEntered, startDate, endDate) Then
+            countDict(county) = countDict(county) + 1
+        End If
+        
+        If InDateRange(annEntered, startDate, endDate) Then
+            countDict(county) = countDict(county) + 1
+        End If
+        
+        If InDateRange(compEntered, startDate, endDate) Then
+            countDict(county) = countDict(county) + 1
+        End If
+        
+NextRow:
+    Next rowNum
+    
+    ' Return the dictionary
+    Set CountWeeklyUploads = countDict
+End Function
+```
+
+Purpose: This is your main counting function. It:
+- Initializes all 21 counties to 0
+- Loops through Sheet1 data
+- Checks columns L, R, V, X for dates within your week range
+- Counts how many reports each county uploaded
+
+PART 2E: CREATE A TEST MACRO
+-----------------------------------
+Below CountWeeklyUploads, add this test macro:
+
+```vba
+' TEST MACRO - Use this to test Part A
+Sub TestCountWeeklyUploads()
+    '=================================================================
+    ' Purpose: Test the upload counting function
+    ' Test Week 1: 10/20/2025 - 10/26/2025
+    '=================================================================
+    
+    Dim wsData As Worksheet
+    Dim wsOutput As Worksheet
+    
+    ' Set references
+    Set wsData = ThisWorkbook.Sheets("Sheet1")
+    Set wsOutput = ThisWorkbook.Sheets("Master_Clearance_Rates")
+    
+    ' Define test week date range
+    Dim startDate As Date, endDate As Date
+    startDate = DateSerial(2025, 10, 20)  ' Monday, Oct 20
+    endDate = DateSerial(2025, 10, 26)    ' Sunday, Oct 26
+    
+    ' Call the counting function
+    Dim uploadCounts As Object
+    Set uploadCounts = CountWeeklyUploads(wsData, startDate, endDate)
+    
+    ' Write results to Master sheet Column B (for testing)
+    Dim counties As Variant
+    counties = GetAllCounties()
+    
+    Dim i As Integer
+    For i = 0 To UBound(counties)
+        wsOutput.Cells(i + 2, 2).Value = uploadCounts(counties(i))
+    Next i
+    
+    MsgBox "Test complete! Check Master_Clearance_Rates sheet, column B", vbInformation
+End Sub
+```
