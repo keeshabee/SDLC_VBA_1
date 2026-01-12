@@ -10,6 +10,44 @@ Public Function GetAllCounties() As Variant
                            "Salem", "Somerset", "Sussex", "Union", "Warren")
 End Function
 
+Function GetFullCountyName(abbrev As String) As String
+    '=================================================================
+    ' Convert county abbreviation to full name
+    ' Sheet1 uses abbreviations, Weekly_Uploads uses full names
+    '=================================================================
+    
+    Dim fullName As String
+    abbrev = UCase(Trim(abbrev))  ' Convert to uppercase and trim spaces
+    
+    Select Case abbrev
+        Case "ATL": fullName = "Atlantic"
+        Case "BER": fullName = "Bergen"
+        Case "BUR": fullName = "Burlington"
+        Case "CAM": fullName = "Camden"
+        Case "CAP": fullName = "Cape May"
+        Case "CUM": fullName = "Cumberland"
+        Case "ESS": fullName = "Essex"
+        Case "GLO": fullName = "Gloucester"
+        Case "HUD": fullName = "Hudson"
+        Case "HUN": fullName = "Hunterdon"
+        Case "MER": fullName = "Mercer"
+        Case "MID": fullName = "Middlesex"
+        Case "MON": fullName = "Monmouth"
+        Case "MOR": fullName = "Morris"
+        Case "OCE": fullName = "Ocean"
+        Case "PAS": fullName = "Passaic"
+        Case "SAL": fullName = "Salem"
+        Case "SOM": fullName = "Somerset"
+        Case "SUS": fullName = "Sussex"
+        Case "UNI": fullName = "Union"
+        Case "WAR": fullName = "Warren"
+        Case Else
+            fullName = abbrev  ' If not found, return original
+    End Select
+    
+    GetFullCountyName = fullName
+End Function
+
 Function FindOrCreateDateColumn(ws As Worksheet, dateHeader As String) As Long
     '=================================================================
     ' Find existing date column or create new one
@@ -153,6 +191,8 @@ Sub ProcessWeeklyUploads()
     
     For i = 2 To lastRow  ' Start at row 2 (assuming row 1 is headers)
         county = Trim(wsData.Cells(i, 1).Value)  ' Column A - County
+        (abbreviated)
+        county = GetFullCountyName(county)  ' Convert abbreviation to full name
         
         If county <> "" Then
             uploadCount = 0
