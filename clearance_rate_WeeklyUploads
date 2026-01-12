@@ -1,3 +1,102 @@
+Option Explicit
+
+' ===== SHARED FUNCTIONS =====
+
+Public Function GetAllCounties() As Variant
+    GetAllCounties = Array("Atlantic", "Bergen", "Burlington", "Camden", _
+                           "Cape May", "Cumberland", "Essex", "Gloucester", _
+                           "Hudson", "Hunterdon", "Mercer", "Middlesex", _
+                           "Monmouth", "Morris", "Ocean", "Passaic", _
+                           "Salem", "Somerset", "Sussex", "Union", "Warren")
+End Function
+
+Function FindOrCreateDateColumn(ws As Worksheet, dateHeader As String) As Long
+    '=================================================================
+    ' Find existing date column or create new one
+    '=================================================================
+    
+    Dim lastCol As Long, col As Long
+    Dim found As Boolean
+    
+    lastCol = ws.Cells(2, ws.Columns.Count).End(xlToLeft).Column
+    
+    found = False
+    For col = 2 To lastCol
+        If ws.Cells(2, col).Value = dateHeader Then
+            FindOrCreateDateColumn = col
+            found = True
+            Exit Function
+        End If
+    Next col
+    
+    If Not found Then
+        FindOrCreateDateColumn = lastCol + 1
+        ws.Cells(2, lastCol + 1).Value = dateHeader
+        ws.Cells(2, lastCol + 1).Font.Bold = True
+        ws.Cells(2, lastCol + 1).HorizontalAlignment = xlCenter
+    End If
+End Function
+
+Function IsDateInRange(cellValue As Variant, startDate As Date, endDate As Date) As Boolean
+    '=================================================================
+    ' Check if a date falls within the specified range
+    '=================================================================
+    
+    IsDateInRange = False
+    
+    If IsEmpty(cellValue) Or cellValue = "" Or cellValue = 0 Then
+        Exit Function
+    End If
+    
+    On Error Resume Next
+    Dim checkDate As Date
+    checkDate = CDate(cellValue)
+    On Error GoTo 0
+    
+    If checkDate >= startDate And checkDate <= endDate Then
+        IsDateInRange = True
+    End If
+End Function
+
+' ===== HELPER SUBS FOR MASTER SHEET (ProcessReportReviewData) =====
+
+Sub WriteCountyData(wsMaster As Worksheet, county As String, col As Long, count As Long)
+    '=================================================================
+    ' Write count to the correct county row in MASTER SHEET
+    '=================================================================
+    
+    Dim lastRow As Long, i As Long
+    
+    lastRow = wsMaster.Cells(wsMaster.Rows.Count, "A").End(xlUp).Row
+    
+    For i = 3 To lastRow
+        If Trim(wsMaster.Cells(i, 1).Value) = county Then
+            wsMaster.Cells(i, col).Value = count
+            Exit Sub
+        End If
+    Next i
+End Sub
+
+' ===== HELPER SUBS FOR Weekly_Uploads (ProcessWeeklyUploads) =====
+
+Sub AddToCountyUpload(wsUploads As Worksheet, county As String, col As Long, count As Long)
+    '=================================================================
+    ' Add upload count to the correct county row
+    '=================================================================
+    
+    Dim lastRow As Long, i As Long
+    
+    lastRow = wsUploads.Cells(wsUploads.Rows.Count, "A").End(xlUp).Row
+    
+    For i = 3 To lastRow
+        If Trim(wsUploads.Cells(i, 1).Value) = county Then
+            wsUploads.Cells(i, col).Value = wsUploads.Cells(i, col).Value + count
+            Exit Sub
+        End If
+    Next i
+End Sub
+
+
 Sub ProcessWeeklyUploads()
     '=================================================================
     ' Purpose: Count weekly uploads from Time to Entry data
@@ -96,54 +195,4 @@ Sub ProcessWeeklyUploads()
     
 ErrorHandler:
     MsgBox "Error " & Err.Number & ": " & Err.Description, vbCritical
-End Sub
-```
-
-==================================================================
-STEP 3: HELPER FUNCTIONS
-==================================================================
-
-Add these helper functions to Module1:
-
-```vba
-Function IsDateInRange(cellValue As Variant, startDate As Date, endDate As Date) As Boolean
-    '=================================================================
-    ' Check if a date falls within the specified range
-    '=================================================================
-    
-    IsDateInRange = False
-    
-    ' Handle empty cells
-    If IsEmpty(cellValue) Or cellValue = "" Or cellValue = 0 Then
-        Exit Function
-    End If
-    
-    ' Try to convert to date
-    On Error Resume Next
-    Dim checkDate As Date
-    checkDate = CDate(cellValue)
-    On Error GoTo 0
-    
-    ' Check if within range
-    If checkDate >= startDate And checkDate <= endDate Then
-        IsDateInRange = True
-    End If
-End Function
-
-Sub AddToCountyUpload(wsUploads As Worksheet, county As String, col As Long, count As Long)
-    '=================================================================
-    ' Add upload count to the correct county row
-    '=================================================================
-    
-    Dim lastRow As Long, i As Long
-    
-    lastRow = wsUploads.Cells(wsUploads.Rows.Count, "A").End(xlUp).Row
-    
-    ' Find the county row and add the count
-    For i = 3 To lastRow
-        If Trim(wsUploads.Cells(i, 1).Value) = county Then
-            wsUploads.Cells(i, col).Value = wsUploads.Cells(i, col).Value + count
-            Exit Sub
-        End If
-    Next i
 End Sub
