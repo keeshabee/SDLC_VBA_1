@@ -1,0 +1,149 @@
+Sub ProcessWeeklyUploads()
+    '=================================================================
+    ' Purpose: Count weekly uploads from Time to Entry data
+    '          Count reports ENTERED in columns L, R, V, X
+    '          Write results to Weekly_Uploads sheet
+    '=================================================================
+    
+    On Error GoTo ErrorHandler
+    
+    Dim wsData As Worksheet
+    Dim wsUploads As Worksheet
+    Dim startDate As Date, endDate As Date
+    Dim dateHeader As String
+    Dim targetCol As Long
+    Dim lastRow As Long, i As Long
+    Dim county As String
+    Dim uploadCount As Long
+    
+    ' Set worksheet references
+    Set wsData = ThisWorkbook.Sheets("Sheet1")
+    Set wsUploads = ThisWorkbook.Sheets("Weekly_Uploads")
+    
+    ' Get date range from user
+    Dim startDateStr As String, endDateStr As String
+    startDateStr = InputBox("Enter start date (Monday) in format MM/DD/YYYY:", _
+                           "Start Date", "11/10/2025")
+    If startDateStr = "" Then Exit Sub
+    
+    endDateStr = InputBox("Enter end date (Sunday) in format MM/DD/YYYY:", _
+                         "End Date", "11/16/2025")
+    If endDateStr = "" Then Exit Sub
+    
+    ' Convert to dates
+    startDate = CDate(startDateStr)
+    endDate = CDate(endDateStr)
+    
+    ' Create date header
+    dateHeader = startDateStr
+    
+    ' Find or create column for this date
+    targetCol = FindOrCreateDateColumn(wsUploads, dateHeader)
+    
+    ' Initialize all counties to 0
+    Dim counties As Variant
+    counties = GetAllCounties()
+    
+    Dim j As Integer
+    For j = 0 To UBound(counties)
+        wsUploads.Cells(j + 3, targetCol).Value = 0  ' Row 3 starts county data
+    Next j
+    
+    ' Count uploads from Sheet1 data
+    lastRow = wsData.Cells(wsData.Rows.Count, "A").End(xlUp).Row
+    
+    For i = 2 To lastRow  ' Start at row 2 (assuming row 1 is headers)
+        county = Trim(wsData.Cells(i, 1).Value)  ' Column A - County
+        
+        If county <> "" Then
+            uploadCount = 0
+            
+            ' Check Column L (12) - Inventory Report Entered
+            If IsDateInRange(wsData.Cells(i, 12).Value, startDate, endDate) Then
+                uploadCount = uploadCount + 1
+            End If
+            
+            ' Check Column R (18) - EZ Accounting Report Entered
+            If IsDateInRange(wsData.Cells(i, 18).Value, startDate, endDate) Then
+                uploadCount = uploadCount + 1
+            End If
+            
+            ' Check Column V (22) - Annual Report Entered
+            If IsDateInRange(wsData.Cells(i, 22).Value, startDate, endDate) Then
+                uploadCount = uploadCount + 1
+            End If
+            
+            ' Check Column X (24) - Comprehensive Report Entered
+            If IsDateInRange(wsData.Cells(i, 24).Value, startDate, endDate) Then
+                uploadCount = uploadCount + 1
+            End If
+            
+            ' If any reports were uploaded, add to county total
+            If uploadCount > 0 Then
+                Call AddToCountyUpload(wsUploads, county, targetCol, uploadCount)
+            End If
+        End If
+    Next i
+    
+    ' Calculate weekly total
+    wsUploads.Cells(24, targetCol).Value = Application.WorksheetFunction.Sum(wsUploads.Range(wsUploads.Cells(3, targetCol), wsUploads.Cells(23, targetCol)))
+    wsUploads.Cells(24, targetCol).Font.Bold = True
+    
+    MsgBox "Weekly uploads processed for week " & dateHeader & vbCrLf & _
+           "Results written to Weekly_Uploads sheet, column " & targetCol & vbCrLf & vbCrLf & _
+           "Total uploads: " & wsUploads.Cells(24, targetCol).Value, vbInformation
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "Error " & Err.Number & ": " & Err.Description, vbCritical
+End Sub
+```
+
+==================================================================
+STEP 3: HELPER FUNCTIONS
+==================================================================
+
+Add these helper functions to Module1:
+
+```vba
+Function IsDateInRange(cellValue As Variant, startDate As Date, endDate As Date) As Boolean
+    '=================================================================
+    ' Check if a date falls within the specified range
+    '=================================================================
+    
+    IsDateInRange = False
+    
+    ' Handle empty cells
+    If IsEmpty(cellValue) Or cellValue = "" Or cellValue = 0 Then
+        Exit Function
+    End If
+    
+    ' Try to convert to date
+    On Error Resume Next
+    Dim checkDate As Date
+    checkDate = CDate(cellValue)
+    On Error GoTo 0
+    
+    ' Check if within range
+    If checkDate >= startDate And checkDate <= endDate Then
+        IsDateInRange = True
+    End If
+End Function
+
+Sub AddToCountyUpload(wsUploads As Worksheet, county As String, col As Long, count As Long)
+    '=================================================================
+    ' Add upload count to the correct county row
+    '=================================================================
+    
+    Dim lastRow As Long, i As Long
+    
+    lastRow = wsUploads.Cells(wsUploads.Rows.Count, "A").End(xlUp).Row
+    
+    ' Find the county row and add the count
+    For i = 3 To lastRow
+        If Trim(wsUploads.Cells(i, 1).Value) = county Then
+            wsUploads.Cells(i, col).Value = wsUploads.Cells(i, col).Value + count
+            Exit Sub
+        End If
+    Next i
+End Sub
