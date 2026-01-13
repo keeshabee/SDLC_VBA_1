@@ -1,1 +1,339 @@
+CLEARANCE RATE SUMMARY SHEET - FINAL PIECE
+==================================================================
 
+This sheet combines data from MASTER SHEET and Weekly_Uploads to show
+the actual clearance rates (Completed - Uploaded).
+
+==================================================================
+STEP 1: CREATE THE CLEARANCE_RATE_SUMMARY SHEET
+==================================================================
+
+OPTION A: Manual Setup (Quick)
+-----------------------------------
+
+1. Create a new sheet
+2. Name it: "Clearance_Rate_Summary"
+3. Set up structure:
+
+   Row 1: Title - "Weekly Clearance Rates (Completed - Uploaded)"
+   Row 2: Headers - County | [date columns will be added by macro]
+   Rows 3-23: All 21 county names (same as MASTER SHEET)
+   Row 24: "TOTAL FOR WEEK"
+
+Copy from MASTER SHEET:
+- Select A1:A24 from MASTER SHEET
+- Copy
+- Paste into Clearance_Rate_Summary A1:A24
+
+OPTION B: Automated Setup (Macro creates it)
+-----------------------------------
+
+The macro below can create the sheet for you automatically.
+
+==================================================================
+STEP 2: THE CalculateClearanceRates MACRO
+==================================================================
+
+Add this to Module1:
+
+```vba
+Sub CalculateClearanceRates()
+    '=================================================================
+    ' Purpose: Calculate clearance rates from MASTER SHEET and Weekly_Uploads
+    '          Clearance Rate = Completed - Uploaded
+    '          Write to Clearance_Rate_Summary sheet
+    '=================================================================
+    
+    On Error GoTo ErrorHandler
+    
+    Dim wsMaster As Worksheet
+    Dim wsUploads As Worksheet
+    Dim wsSummary As Worksheet
+    Dim dateHeader As String
+    Dim masterCol As Long, uploadCol As Long, summaryCol As Long
+    Dim i As Long
+    Dim completed As Long, uploaded As Long, clearanceRate As Long
+    
+    ' Set worksheet references
+    Set wsMaster = ThisWorkbook.Sheets("MASTER SHEET")
+    Set wsUploads = ThisWorkbook.Sheets("Weekly_Uploads")
+    
+    ' Check if Clearance_Rate_Summary exists, if not create it
+    On Error Resume Next
+    Set wsSummary = ThisWorkbook.Sheets("Clearance_Rate_Summary")
+    On Error GoTo ErrorHandler
+    
+    If wsSummary Is Nothing Then
+        ' Create the sheet
+        Set wsSummary = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+        wsSummary.Name = "Clearance_Rate_Summary"
+        
+        ' Set up headers
+        wsSummary.Range("A1").Value = "Weekly Clearance Rates (Completed - Uploaded)"
+        wsSummary.Range("A1").Font.Bold = True
+        wsSummary.Range("A1").Font.Size = 12
+        
+        wsSummary.Range("A2").Value = "County"
+        wsSummary.Range("A2").Font.Bold = True
+        
+        ' Add all county names
+        Dim counties As Variant
+        counties = GetAllCounties()
+        Dim j As Integer
+        For j = 0 To UBound(counties)
+            wsSummary.Cells(j + 3, 1).Value = counties(j)
+        Next j
+        
+        wsSummary.Cells(24, 1).Value = "TOTAL FOR WEEK"
+        wsSummary.Cells(24, 1).Font.Bold = True
+    End If
+    
+    ' Get date from user
+    dateHeader = InputBox("Enter the date to calculate clearance rate for (MM/DD/YYYY):" & vbCrLf & _
+                         "This should match a date you've already processed.", _
+                         "Calculate Clearance Rate", "11/10/2025")
+    If dateHeader = "" Then Exit Sub
+    
+    ' Find the date column in both sheets
+    masterCol = FindDateColumn(wsMaster, dateHeader)
+    uploadCol = FindDateColumn(wsUploads, dateHeader)
+    
+    If masterCol = 0 Then
+        MsgBox "Date " & dateHeader & " not found in MASTER SHEET." & vbCrLf & _
+               "Please run ProcessReportReviewData first.", vbExclamation
+        Exit Sub
+    End If
+    
+    If uploadCol = 0 Then
+        MsgBox "Date " & dateHeader & " not found in Weekly_Uploads sheet." & vbCrLf & _
+               "Please run ProcessWeeklyUploads first.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Find or create column in summary sheet
+    summaryCol = FindOrCreateDateColumn(wsSummary, dateHeader)
+    
+    ' Calculate clearance rates for each county
+    For i = 3 To 23  ' Rows 3-23 are counties
+        completed = 0
+        uploaded = 0
+        
+        ' Get values (handle empty cells)
+        If IsNumeric(wsMaster.Cells(i, masterCol).Value) Then
+            completed = wsMaster.Cells(i, masterCol).Value
+        End If
+        
+        If IsNumeric(wsUploads.Cells(i, uploadCol).Value) Then
+            uploaded = wsUploads.Cells(i, uploadCol).Value
+        End If
+        
+        ' Calculate clearance rate
+        clearanceRate = completed - uploaded
+        
+        ' Write to summary sheet
+        wsSummary.Cells(i, summaryCol).Value = clearanceRate
+    Next i
+    
+    ' Calculate total
+    wsSummary.Cells(24, summaryCol).Value = _
+        Application.WorksheetFunction.Sum(wsSummary.Range(wsSummary.Cells(3, summaryCol), _
+                                                           wsSummary.Cells(23, summaryCol)))
+    wsSummary.Cells(24, summaryCol).Font.Bold = True
+    
+    ' Apply conditional formatting (optional)
+    Call ApplyHeatmapFormatting(wsSummary)
+    
+    MsgBox "Clearance rates calculated for week " & dateHeader & vbCrLf & vbCrLf & _
+           "Results in Clearance_Rate_Summary sheet, column " & summaryCol & vbCrLf & _
+           "Total clearance: " & wsSummary.Cells(24, summaryCol).Value & vbCrLf & vbCrLf & _
+           "Positive = Catching up" & vbCrLf & _
+           "Negative = Falling behind", vbInformation
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "Error " & Err.Number & ": " & Err.Description, vbCritical
+End Sub
+```
+
+==================================================================
+STEP 3: ADD HELPER FUNCTION - FindDateColumn
+==================================================================
+
+This is similar to FindOrCreateDateColumn but only searches (doesn't create):
+
+```vba
+Function FindDateColumn(ws As Worksheet, dateHeader As String) As Long
+    '=================================================================
+    ' Find existing date column (returns 0 if not found)
+    '=================================================================
+    
+    Dim lastCol As Long, col As Long
+    
+    lastCol = ws.Cells(2, ws.Columns.Count).End(xlToLeft).Column
+    
+    For col = 2 To lastCol
+        If ws.Cells(2, col).Value = dateHeader Then
+            FindDateColumn = col
+            Exit Function
+        End If
+    Next col
+    
+    ' Not found
+    FindDateColumn = 0
+End Function
+```
+
+==================================================================
+STEP 4: THE COMPLETE USER WORKFLOW
+==================================================================
+
+FOR BROOKE TO PROCESS ONE WEEK:
+
+**Step 1: Process Completed Reports**
+1. Paste Report Review export into "Data" sheet
+2. Run ProcessReportReviewData macro
+3. Enter dates (e.g., 11/10/2025 to 11/16/2025)
+   → MASTER SHEET updated
+
+**Step 2: Process Uploaded Reports**
+1. Make sure Sheet1 has Time to Entry data
+2. Run ProcessWeeklyUploads macro
+3. Enter the SAME dates (11/10/2025 to 11/16/2025)
+   → Weekly_Uploads sheet updated
+
+**Step 3: Calculate Clearance Rates**
+1. Run CalculateClearanceRates macro
+2. Enter the date (11/10/2025)
+   → Clearance_Rate_Summary sheet updated with rates
+
+**Step 4: Review Results**
+- Clearance_Rate_Summary shows final clearance rates
+- Red = Negative (falling behind)
+- Yellow = Neutral (keeping pace)
+- Green = Positive (catching up)
+
+==================================================================
+STEP 5: OPTIONAL - ALL-IN-ONE MACRO
+==================================================================
+
+If you want to automate all 3 steps in one go:
+
+```vba
+Sub ProcessFullWeek()
+    '=================================================================
+    ' Purpose: Process completed reports, uploads, and clearance rates
+    '          All in one macro - convenient for weekly processing
+    '=================================================================
+    
+    Dim dateStart As String, dateEnd As String
+    
+    ' Get dates once
+    dateStart = InputBox("Enter start date (Monday) MM/DD/YYYY:", _
+                        "Week Start", "11/10/2025")
+    If dateStart = "" Then Exit Sub
+    
+    dateEnd = InputBox("Enter end date (Sunday) MM/DD/YYYY:", _
+                      "Week End", "11/16/2025")
+    If dateEnd = "" Then Exit Sub
+    
+    ' Confirm with user
+    If MsgBox("Process full week:" & vbCrLf & _
+              dateStart & " to " & dateEnd & vbCrLf & vbCrLf & _
+              "This will:" & vbCrLf & _
+              "1. Process completed reports from Data sheet" & vbCrLf & _
+              "2. Count uploads from Sheet1" & vbCrLf & _
+              "3. Calculate clearance rates" & vbCrLf & vbCrLf & _
+              "Continue?", vbYesNo + vbQuestion) = vbNo Then
+        Exit Sub
+    End If
+    
+    ' Step 1: Process completed reports
+    ' (Would need to modify ProcessReportReviewData to accept parameters)
+    
+    ' Step 2: Process uploads
+    ' (Would need to modify ProcessWeeklyUploads to accept parameters)
+    
+    ' Step 3: Calculate clearance rates
+    ' (Would need to modify CalculateClearanceRates to accept parameters)
+    
+    MsgBox "Full week processing complete!" & vbCrLf & _
+           "Check Clearance_Rate_Summary for results.", vbInformation
+End Sub
+```
+
+NOTE: This requires modifying the other macros to accept date parameters
+instead of prompting the user. Let me know if you want this version.
+
+==================================================================
+STEP 6: TESTING
+==================================================================
+
+Test with your 11/10 week data:
+
+1. Make sure you've already run:
+   - ProcessReportReviewData for 11/10-11/16 ✓
+   - ProcessWeeklyUploads for 11/10-11/16 ✓
+
+2. Run CalculateClearanceRates
+3. Enter: 11/10/2025
+4. Check Clearance_Rate_Summary sheet
+
+Expected results:
+- Each county shows: Completed - Uploaded
+- Negative numbers = falling behind
+- Positive numbers = catching up
+- Zero = keeping pace
+
+Repeat for 11/17 and 11/24 weeks.
+
+==================================================================
+INTERPRETING THE RESULTS
+==================================================================
+
+Example:
+Atlantic: -2
+- Completed: 3 reports
+- Uploaded: 5 reports
+- Clearance: 3 - 5 = -2 (falling behind by 2 reports)
+
+Bergen: -7
+- Completed: 23 reports
+- Uploaded: 30 reports
+- Clearance: 23 - 30 = -7 (falling behind by 7 reports)
+
+Camden: +2
+- Completed: 8 reports
+- Uploaded: 6 reports
+- Clearance: 8 - 6 = +2 (caught up and cleared 2 extra)
+
+==================================================================
+FINAL OUTPUT: THREE COORDINATED SHEETS
+==================================================================
+
+1. **MASTER SHEET**
+   - Shows: Completed reports per week
+   - Source: Report Review exports
+
+2. **Weekly_Uploads**
+   - Shows: Uploaded reports per week
+   - Source: Time to Entry Sheet1
+
+3. **Clearance_Rate_Summary**
+   - Shows: Clearance rates (Completed - Uploaded)
+   - Source: Calculated from sheets 1 and 2
+   - THIS IS THE KEY METRIC for Brooke
+
+==================================================================
+WHAT YOU'VE BUILT
+==================================================================
+
+✅ Macro #1: Time to Entry Report (turnaround times)
+✅ Macro #2: Outcomes - Numeric (year-to-date counts)
+✅ Macro #3: Clearance Rate Tracking
+   ✅ Part A: Completed reports (ProcessReportReviewData)
+   ✅ Part B: Uploaded reports (ProcessWeeklyUploads)
+   ✅ Part C: Clearance rates (CalculateClearanceRates)
+
+Three complete automation systems with comprehensive reporting!
+
+==================================================================
