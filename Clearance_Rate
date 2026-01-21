@@ -1,29 +1,304 @@
-Subject: Ready to Start Clearance Rate Macro - Quick Clarifications Needed
+HEATMAP FORMATTING FOR CLEARANCE_RATE_SUMMARY
+==================================================================
 
-Hi Brooke,
+ADD THIS TO YOUR CalculateClearanceRates MACRO
+==================================================================
 
-I'm ready to start working on the Clearance Rate macro (Macro #3). I have the Master_Completed New Report Reviews file and sample exports from Report Review for weeks 10/20-10/26 and 10/27-11/2, so I'm all set on the data side.
+STEP 1: Find this section in your CalculateClearanceRates macro:
+-------------------------------------------------------------------
 
-I just need a few quick clarifications before I start building:
+```vba
+    ' Calculate total for row 24
+    wsSummary.Cells(24, summaryCol).Value = _
+        Application.WorksheetFunction.Sum(wsSummary.Range(wsSummary.Cells(3, summaryCol), _
+                                                           wsSummary.Cells(23, summaryCol)))
+    wsSummary.Cells(24, summaryCol).Font.Bold = True
+    
+    ' Show success message
+    MsgBox "Clearance rates calculated for week " & dateHeader & vbCrLf & vbCrLf & _
+```
 
-**Workflow Questions:**
-- Which day of the week do you typically run these reports? (I know you mentioned it, but I want to make sure I have it right)
-- Do your weeks run Sunday-Saturday, Monday-Sunday, or another schedule?
-- Should the macro calculate one week at a time or handle multiple weeks at once?
+STEP 2: INSERT THIS CODE between the Bold line and the MsgBox:
+-------------------------------------------------------------------
 
-**Confirming the Data Logic:**
-From our call and looking at the Time to Entry data, the four financial reports that go to volunteers are:
-1. Inventory (Column L - Entered)
-2. EZ Accounting (Column R - Entered)
-3. Annual Report (Column V - Entered)
-4. Comprehensive Accounting (Column X - Entered)
+```vba
+    ' Apply heatmap formatting to the clearance rate column
+    Call ApplyHeatmapToColumn(wsSummary, summaryCol)
+```
 
-Can you confirm that:
-- These are the correct columns (L, R, V, X)?
-- I should be using the **Entered** dates (when uploaded to system), not Filed dates?
-- Unlike Macros 1 and 2, these reports should NOT be filtered by the 2025 Judgment dates - they should count all reports entered within the week regardless of when judgments were filed, correct?
+STEP 3: Your updated section should look like this:
+-------------------------------------------------------------------
 
-Once I have these confirmations, I can start building. Let me know if you'd prefer a quick call to discuss!
+```vba
+    ' Calculate total for row 24
+    wsSummary.Cells(24, summaryCol).Value = _
+        Application.WorksheetFunction.Sum(wsSummary.Range(wsSummary.Cells(3, summaryCol), _
+                                                           wsSummary.Cells(23, summaryCol)))
+    wsSummary.Cells(24, summaryCol).Font.Bold = True
+    
+    ' Apply heatmap formatting to the clearance rate column
+    Call ApplyHeatmapToColumn(wsSummary, summaryCol)
+    
+    ' Show success message
+    MsgBox "Clearance rates calculated for week " & dateHeader & vbCrLf & vbCrLf & _
+```
 
-Thanks,
-Keisha
+==================================================================
+STEP 4: ADD THE HEATMAP FUNCTION TO MODULE1
+==================================================================
+
+Add this complete function at the bottom of Module1:
+
+```vba
+Sub ApplyHeatmapToColumn(ws As Worksheet, col As Long)
+    '=================================================================
+    ' Apply color-coded heatmap to clearance rate column
+    ' GREEN = Positive (caught up)
+    ' YELLOW = Zero (keeping pace)  
+    ' RED = Negative (falling behind)
+    '=================================================================
+    
+    Dim i As Long
+    Dim cellValue As Variant
+    
+    ' Apply formatting to county rows (3-23)
+    For i = 3 To 23
+        cellValue = ws.Cells(i, col).Value
+        
+        ' Clear any existing formatting
+        ws.Cells(i, col).Interior.Pattern = xlSolid
+        
+        If IsNumeric(cellValue) Then
+            If cellValue > 0 Then
+                ' Positive = GREEN (caught up)
+                ws.Cells(i, col).Interior.Color = RGB(198, 239, 206)  ' Light green
+                ws.Cells(i, col).Font.Color = RGB(0, 97, 0)           ' Dark green text
+                
+            ElseIf cellValue = 0 Then
+                ' Zero = YELLOW (keeping pace)
+                ws.Cells(i, col).Interior.Color = RGB(255, 235, 156)  ' Light yellow
+                ws.Cells(i, col).Font.Color = RGB(156, 101, 0)        ' Dark yellow text
+                
+            Else ' cellValue < 0
+                ' Negative = RED (falling behind)
+                ws.Cells(i, col).Interior.Color = RGB(255, 199, 206)  ' Light red
+                ws.Cells(i, col).Font.Color = RGB(156, 0, 6)          ' Dark red text
+            End If
+            
+            ' Make negative numbers easier to see
+            If cellValue < 0 Then
+                ws.Cells(i, col).Font.Bold = True
+            End If
+        End If
+    Next i
+    
+    ' Format total row (24) - special formatting
+    cellValue = ws.Cells(24, col).Value
+    
+    If IsNumeric(cellValue) Then
+        ws.Cells(24, col).Font.Bold = True
+        ws.Cells(24, col).Interior.Pattern = xlSolid
+        
+        If cellValue > 0 Then
+            ' Positive total = Strong green
+            ws.Cells(24, col).Interior.Color = RGB(146, 208, 80)     ' Brighter green
+            ws.Cells(24, col).Font.Color = RGB(0, 97, 0)
+            
+        ElseIf cellValue = 0 Then
+            ' Zero total = Strong yellow
+            ws.Cells(24, col).Interior.Color = RGB(255, 192, 0)      ' Brighter yellow
+            ws.Cells(24, col).Font.Color = RGB(156, 101, 0)
+            
+        Else
+            ' Negative total = Strong red
+            ws.Cells(24, col).Interior.Color = RGB(255, 0, 0)        ' Bright red
+            ws.Cells(24, col).Font.Color = RGB(255, 255, 255)        ' White text for contrast
+        End If
+    End If
+End Sub
+```
+
+==================================================================
+COLOR SCHEME EXPLANATION
+==================================================================
+
+**GREEN (Caught Up - Positive Numbers)**
+- Background: Light green (RGB 198, 239, 206)
+- Text: Dark green (RGB 0, 97, 0)
+- Meaning: County completed MORE reports than were uploaded
+- Example: Completed 10, Uploaded 8 = +2 (GREEN)
+
+**YELLOW (Keeping Pace - Zero)**
+- Background: Light yellow (RGB 255, 235, 156)
+- Text: Dark yellow (RGB 156, 101, 0)
+- Meaning: County completed SAME amount as uploaded
+- Example: Completed 5, Uploaded 5 = 0 (YELLOW)
+
+**RED (Falling Behind - Negative Numbers)**
+- Background: Light red (RGB 255, 199, 206)
+- Text: Dark red (RGB 156, 0, 6)
+- Font: Bold for emphasis
+- Meaning: County completed FEWER reports than uploaded (backlog growing)
+- Example: Completed 5, Uploaded 10 = -5 (RED)
+
+**TOTAL ROW (Row 24) - Stronger Colors**
+- Uses brighter versions of the same colors
+- White text on red background for better contrast
+- Bold font
+- Gives immediate visual of overall system status
+
+==================================================================
+WHAT THE HEATMAP LOOKS LIKE
+==================================================================
+
+Your Clearance_Rate_Summary will look like:
+
+County          | 11/24/2025
+----------------|------------
+Atlantic        |     -2     ← RED (falling behind)
+Bergen          |     -7     ← RED (falling behind)
+Burlington      |     -15    ← RED (falling behind)
+Camden          |     +2     ← GREEN (caught up!)
+Cape May        |     +9     ← GREEN (caught up!)
+Cumberland      |      0     ← YELLOW (keeping pace)
+Essex           |     +11    ← GREEN (caught up!)
+Gloucester      |      0     ← YELLOW (keeping pace)
+...
+TOTAL FOR WEEK  |    -35     ← BRIGHT RED (system falling behind)
+
+==================================================================
+ALTERNATIVE COLOR SCHEMES (If Brooke Prefers Different Colors)
+==================================================================
+
+**Option 1: Excel's Standard Colors**
+```vba
+' GREEN
+ws.Cells(i, col).Interior.Color = RGB(0, 176, 80)    ' Excel green
+ws.Cells(i, col).Font.Color = RGB(255, 255, 255)     ' White text
+
+' YELLOW  
+ws.Cells(i, col).Interior.Color = RGB(255, 255, 0)   ' Excel yellow
+ws.Cells(i, col).Font.Color = RGB(0, 0, 0)           ' Black text
+
+' RED
+ws.Cells(i, col).Interior.Color = RGB(255, 0, 0)     ' Excel red
+ws.Cells(i, col).Font.Color = RGB(255, 255, 255)     ' White text
+```
+
+**Option 2: Subtle/Pastel Colors**
+```vba
+' GREEN
+ws.Cells(i, col).Interior.Color = RGB(217, 234, 211) ' Very light green
+ws.Cells(i, col).Font.Color = RGB(0, 0, 0)           ' Black text
+
+' YELLOW
+ws.Cells(i, col).Interior.Color = RGB(255, 242, 204) ' Very light yellow
+ws.Cells(i, col).Font.Color = RGB(0, 0, 0)           ' Black text
+
+' RED
+ws.Cells(i, col).Interior.Color = RGB(244, 204, 204) ' Very light red
+ws.Cells(i, col).Font.Color = RGB(0, 0, 0)           ' Black text
+```
+
+**Option 3: Traffic Light Style (Bright)**
+```vba
+' GREEN
+ws.Cells(i, col).Interior.Color = RGB(0, 255, 0)     ' Bright green
+ws.Cells(i, col).Font.Color = RGB(0, 0, 0)           ' Black text
+
+' YELLOW
+ws.Cells(i, col).Interior.Color = RGB(255, 255, 0)   ' Bright yellow
+ws.Cells(i, col).Font.Color = RGB(0, 0, 0)           ' Black text
+
+' RED
+ws.Cells(i, col).Interior.Color = RGB(255, 0, 0)     ' Bright red
+ws.Cells(i, col).Font.Color = RGB(255, 255, 255)     ' White text
+```
+
+==================================================================
+TESTING THE HEATMAP
+==================================================================
+
+After adding the code:
+
+1. Save Module1 (Ctrl + S)
+2. Close VBA Editor
+3. Go to Clearance_Rate_Summary sheet
+4. Click "Calculate Clearance Rates" button
+5. Enter a week you've already processed (e.g., 11/24/2025)
+6. Check the formatting:
+   - Positive numbers = GREEN?
+   - Zero = YELLOW?
+   - Negative numbers = RED?
+   - Total row = Stronger color?
+
+==================================================================
+CUSTOMIZATION OPTIONS
+==================================================================
+
+**Make negative numbers MORE obvious:**
+Add this line in the red section:
+```vba
+ws.Cells(i, col).Font.Size = 11  ' Slightly larger
+```
+
+**Add borders:**
+Add this after the color formatting:
+```vba
+ws.Cells(i, col).Borders.LineStyle = xlContinuous
+ws.Cells(i, col).Borders.Weight = xlThin
+```
+
+**Center-align the numbers:**
+Add this in the formatting loop:
+```vba
+ws.Cells(i, col).HorizontalAlignment = xlCenter
+```
+
+==================================================================
+BROOKE'S UPDATED WORKFLOW
+==================================================================
+
+With heatmap, Brooke's workflow becomes:
+
+1. Click "Calculate Clearance Rates" button
+2. Enter date
+3. Sheet updates with colors:
+   - **Quick scan:** Lots of red? → Need more volunteer support
+   - **Good news:** Lots of green? → Counties catching up!
+   - **Total row color:** Instant system health indicator
+
+No manual formatting needed!
+
+==================================================================
+TROUBLESHOOTING
+==================================================================
+
+**Issue: Colors not appearing**
+Fix: Make sure you added the `Call ApplyHeatmapToColumn` line in CalculateClearanceRates
+
+**Issue: Wrong colors**
+Fix: Check RGB values - make sure they match the function
+
+**Issue: Colors apply to wrong columns**
+Fix: Make sure you're passing `summaryCol` parameter correctly
+
+**Issue: Want different colors**
+Fix: Replace RGB values in the ApplyHeatmapToColumn function
+
+==================================================================
+COMPLETE CODE SUMMARY
+==================================================================
+
+You need to make TWO changes:
+
+1. **In CalculateClearanceRates macro:**
+   Add: `Call ApplyHeatmapToColumn(wsSummary, summaryCol)`
+   (Right before the success MsgBox)
+
+2. **In Module1:**
+   Add the complete `ApplyHeatmapToColumn` function
+
+That's it! The heatmap will automatically apply every time clearance rates are calculated.
+
+==================================================================
