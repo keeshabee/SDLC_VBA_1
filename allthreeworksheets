@@ -21,15 +21,15 @@ Sub ProcessReportReviewData()
     Set wsMaster = ThisWorkbook.Sheets("MASTER SHEET")
     
     ' Get date range from user
-    startDate = InputBox("Enter start date (Monday) in format MM/DD/YYYY:", _
+    startDate = InputBox("Enter start date (Monday) in format M/D/YYYY:", _
                         "Start Date", "11/17/2025")
     If startDate = "" Then Exit Sub
     
-    endDate = InputBox("Enter end date (Sunday) in format MM/DD/YYYY:", _
+    endDate = InputBox("Enter end date (Sunday) in format M/D/YYYY:", _
                       "End Date", "11/23/2025")
     If endDate = "" Then Exit Sub
     
-    ' Create date header (format: MM/DD/YYYY)
+    ' Create date header (format: M/D/YYYY)
     dateHeader = startDate
     
     ' Find or create column for this date in MASTER SHEET
@@ -44,7 +44,7 @@ Sub ProcessReportReviewData()
     Next i
     
     ' Read data from Data sheet and sum across all 4 report types
-    lastRow = wsData.Cells(wsData.Rows.count, "A").End(xlUp).Row
+    lastRow = wsData.Cells(wsData.Rows.Count, "A").End(xlUp).Row
     
     For i = 3 To lastRow  ' Start at row 3 (after headers)
         county = Trim(wsData.Cells(i, 1).Value)  ' Column A - County Name
@@ -94,7 +94,7 @@ Function FindOrCreateDateColumn(wsMaster As Worksheet, dateHeader As String) As 
     Dim found As Boolean
     
     ' Search row 2 for the date header (dates are in row 2)
-    lastCol = wsMaster.Cells(2, wsMaster.Columns.count).End(xlToLeft).Column
+    lastCol = wsMaster.Cells(2, wsMaster.Columns.Count).End(xlToLeft).Column
     
     found = False
     For col = 2 To lastCol  ' Start at column B (A is County)
@@ -204,7 +204,7 @@ Sub WriteCountyData(wsMaster As Worksheet, county As String, col As Long, count 
     
     Dim lastRow As Long, i As Long
     
-    lastRow = wsMaster.Cells(wsMaster.Rows.count, "A").End(xlUp).Row
+    lastRow = wsMaster.Cells(wsMaster.Rows.Count, "A").End(xlUp).Row
     
     For i = 3 To lastRow
         If Trim(wsMaster.Cells(i, 1).Value) = county Then
@@ -223,7 +223,7 @@ Sub AddToCountyUpload(wsUploads As Worksheet, county As String, col As Long, cou
     
     Dim lastRow As Long, i As Long
     
-    lastRow = wsUploads.Cells(wsUploads.Rows.count, "A").End(xlUp).Row
+    lastRow = wsUploads.Cells(wsUploads.Rows.Count, "A").End(xlUp).Row
     
     For i = 3 To lastRow
         If Trim(wsUploads.Cells(i, 1).Value) = county Then
@@ -258,11 +258,11 @@ Sub ProcessWeeklyUploads()
     
     ' Get date range from user
     Dim startDateStr As String, endDateStr As String
-    startDateStr = InputBox("Enter start date (Monday) in format MM/DD/YYYY:", _
+    startDateStr = InputBox("Enter start date (Monday) in format M/D/YYYY:", _
                            "Start Date", "11/10/2025")
     If startDateStr = "" Then Exit Sub
     
-    endDateStr = InputBox("Enter end date (Sunday) in format MM/DD/YYYY:", _
+    endDateStr = InputBox("Enter end date (Sunday) in format M/D/YYYY:", _
                          "End Date", "11/16/2025")
     If endDateStr = "" Then Exit Sub
     
@@ -286,7 +286,7 @@ Sub ProcessWeeklyUploads()
     Next j
     
     ' Count uploads from Sheet1 data
-    lastRow = wsData.Cells(wsData.Rows.count, "A").End(xlUp).Row
+    lastRow = wsData.Cells(wsData.Rows.Count, "A").End(xlUp).Row
     
     For i = 2 To lastRow  ' Start at row 2 (assuming row 1 is headers)
         county = Trim(wsData.Cells(i, 1).Value)  ' Column A - County (abbreviated)
@@ -344,7 +344,7 @@ Function FindDateColumn(ws As Worksheet, dateHeader As String) As Long
     
     Dim lastCol As Long, col As Long
     
-    lastCol = ws.Cells(2, ws.Columns.count).End(xlToLeft).Column
+    lastCol = ws.Cells(2, ws.Columns.Count).End(xlToLeft).Column
     
     For col = 2 To lastCol
         If ws.Cells(2, col).Value = dateHeader Then
@@ -380,7 +380,7 @@ Sub CalculateClearanceRates()
     Set wsSummary = ThisWorkbook.Sheets("Clearance_Rate_Summary")
     
     ' Get date from user
-    dateHeader = InputBox("Enter the date to calculate clearance rate for (MM/DD/YYYY):" & vbCrLf & _
+    dateHeader = InputBox("Enter the date to calculate clearance rate for (M/D/YYYY):" & vbCrLf & _
                          "This should match a date you've already processed.", _
                          "Calculate Clearance Rate", "11/10/2025")
     If dateHeader = "" Then Exit Sub
@@ -516,11 +516,3 @@ Sub ApplyHeatmapToColumn(ws As Worksheet, col As Long)
         End If
     End If
 End Sub
-
-
-
-
-
-
-
-
