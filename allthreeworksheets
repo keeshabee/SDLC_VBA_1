@@ -1,0 +1,526 @@
+Sub ProcessReportReviewData()
+    '=================================================================
+    ' Purpose: Read completed reports from Data sheet
+    '          Write to MASTER SHEET with proper date column
+    ' User provides the date range for the week
+    '=================================================================
+    
+    On Error GoTo ErrorHandler
+    
+    Dim wsData As Worksheet
+    Dim wsMaster As Worksheet
+    Dim startDate As String, endDate As String
+    Dim dateHeader As String
+    Dim targetCol As Long
+    Dim lastRow As Long, i As Long
+    Dim county As String
+    Dim totalCount As Long
+    
+    ' Set worksheet references
+    Set wsData = ThisWorkbook.Sheets("Data")
+    Set wsMaster = ThisWorkbook.Sheets("MASTER SHEET")
+    
+    ' Get date range from user
+    startDate = InputBox("Enter start date (Monday) in format MM/DD/YYYY:", _
+                        "Start Date", "11/17/2025")
+    If startDate = "" Then Exit Sub
+    
+    endDate = InputBox("Enter end date (Sunday) in format MM/DD/YYYY:", _
+                      "End Date", "11/23/2025")
+    If endDate = "" Then Exit Sub
+    
+    ' Create date header (format: MM/DD/YYYY)
+    dateHeader = startDate
+    
+    ' Find or create column for this date in MASTER SHEET
+    targetCol = FindOrCreateDateColumn(wsMaster, dateHeader)
+    
+    ' Initialize all counties to 0 in the target column
+    Dim counties As Variant
+    counties = GetAllCounties()
+    
+    For i = 0 To UBound(counties)
+        wsMaster.Cells(i + 3, targetCol).Value = 0  ' Row 3 starts county data
+    Next i
+    
+    ' Read data from Data sheet and sum across all 4 report types
+    lastRow = wsData.Cells(wsData.Rows.count, "A").End(xlUp).Row
+    
+    For i = 3 To lastRow  ' Start at row 3 (after headers)
+        county = Trim(wsData.Cells(i, 1).Value)  ' Column A - County Name
+        
+        If county <> "" And county <> "TOTAL FOR WEEK" Then
+            ' Sum all 4 report types (columns B, C, D, E based on your image)
+            ' Annual Report (B) + Comprehensive (C) + EZ Accoun (D) + Inventory (E)
+            totalCount = 0
+            
+            ' Add each report type count (handle empty cells)
+            If IsNumeric(wsData.Cells(i, 2).Value) Then
+                totalCount = totalCount + wsData.Cells(i, 2).Value
+            End If
+            If IsNumeric(wsData.Cells(i, 3).Value) Then
+                totalCount = totalCount + wsData.Cells(i, 3).Value
+            End If
+            If IsNumeric(wsData.Cells(i, 4).Value) Then
+                totalCount = totalCount + wsData.Cells(i, 4).Value
+            End If
+            If IsNumeric(wsData.Cells(i, 5).Value) Then
+                totalCount = totalCount + wsData.Cells(i, 5).Value
+            End If
+            
+            ' Write to MASTER SHEET
+            Call WriteCountyData(wsMaster, county, targetCol, totalCount)
+        End If
+    Next i
+    
+    ' Calculate weekly total
+    wsMaster.Cells(24, targetCol).Value = Application.WorksheetFunction.Sum(wsMaster.Range(wsMaster.Cells(3, targetCol), wsMaster.Cells(23, targetCol)))
+        wsMaster.Cells(24, targetCol).Font.Bold = True
+    
+    MsgBox "Report Review data processed for week " & dateHeader & vbCrLf & _
+           "Results written to MASTER SHEET, column " & targetCol, vbInformation
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "Error " & Err.Number & ": " & Err.Description, vbCritical
+End Sub
+
+Function FindOrCreateDateColumn(wsMaster As Worksheet, dateHeader As String) As Long
+    '=================================================================
+    ' Find existing date column or create new one
+    '=================================================================
+    
+    Dim lastCol As Long, col As Long
+    Dim found As Boolean
+    
+    ' Search row 2 for the date header (dates are in row 2)
+    lastCol = wsMaster.Cells(2, wsMaster.Columns.count).End(xlToLeft).Column
+    
+    found = False
+    For col = 2 To lastCol  ' Start at column B (A is County)
+        If wsMaster.Cells(2, col).Value = dateHeader Then
+            FindOrCreateDateColumn = col
+            found = True
+            Exit Function
+        End If
+    Next col
+    
+    ' If not found, INSERT new column at column B (shifts existing right)
+    If Not found Then
+        ' Insert new column at B, shift existing data right
+        wsMaster.Columns("B:B").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        
+        ' Write the new date header in column B
+        wsMaster.Cells(2, 2).Value = dateHeader
+        wsMaster.Cells(2, 2).Font.Bold = True
+        wsMaster.Cells(2, 2).HorizontalAlignment = xlCenter
+        
+        ' Auto-fit thr column width
+        wsMaster.Columns("B:B").AutoFit
+        
+        ' Return column B
+        FindOrCreateDateColumn = 2
+    End If
+End Function
+
+' Keep your existing GetAllCounties function
+Public Function GetAllCounties() As Variant
+    GetAllCounties = Array("Atlantic", "Bergen", "Burlington", "Camden", _
+                           "Cape May", "Cumberland", "Essex", "Gloucester", _
+                           "Hudson", "Hunterdon", "Mercer", "Middlesex", _
+                           "Monmouth", "Morris", "Ocean", "Passaic", _
+                           "Salem", "Somerset", "Sussex", "Union", "Warren")
+End Function
+
+
+
+
+Function GetFullCountyName(abbrev As String) As String
+    '=================================================================
+    ' Convert county abbreviation to full name
+    ' Sheet1 uses abbreviations, Weekly_Uploads uses full names
+    '=================================================================
+    
+    Dim fullName As String
+    abbrev = UCase(Trim(abbrev))  ' Convert to uppercase and trim spaces
+    
+    Select Case abbrev
+        Case "ATL": fullName = "Atlantic"
+        Case "BER": fullName = "Bergen"
+        Case "BUR": fullName = "Burlington"
+        Case "CAM": fullName = "Camden"
+        Case "CAP": fullName = "Cape May"
+        Case "CUM": fullName = "Cumberland"
+        Case "ESS": fullName = "Essex"
+        Case "GLO": fullName = "Gloucester"
+        Case "HUD": fullName = "Hudson"
+        Case "HUN": fullName = "Hunterdon"
+        Case "MER": fullName = "Mercer"
+        Case "MID": fullName = "Middlesex"
+        Case "MON": fullName = "Monmouth"
+        Case "MOR": fullName = "Morris"
+        Case "OCE": fullName = "Ocean"
+        Case "PAS": fullName = "Passaic"
+        Case "SAL": fullName = "Salem"
+        Case "SOM": fullName = "Somerset"
+        Case "SUS": fullName = "Sussex"
+        Case "UNI": fullName = "Union"
+        Case "WAR": fullName = "Warren"
+        Case Else
+            fullName = abbrev  ' If not found, return original
+    End Select
+    
+    GetFullCountyName = fullName
+End Function
+
+
+Function IsDateInRange(cellValue As Variant, startDate As Date, endDate As Date) As Boolean
+    '=================================================================
+    ' Check if a date falls within the specified range
+    '=================================================================
+    
+    IsDateInRange = False
+    
+    If IsEmpty(cellValue) Or cellValue = "" Or cellValue = 0 Then
+        Exit Function
+    End If
+    
+    On Error Resume Next
+    Dim checkDate As Date
+    checkDate = CDate(cellValue)
+    On Error GoTo 0
+    
+    If checkDate >= startDate And checkDate <= endDate Then
+        IsDateInRange = True
+    End If
+End Function
+
+' ===== HELPER SUBS FOR MASTER SHEET (ProcessReportReviewData) =====
+
+Sub WriteCountyData(wsMaster As Worksheet, county As String, col As Long, count As Long)
+    '=================================================================
+    ' Write count to the correct county row in MASTER SHEET
+    '=================================================================
+    
+    Dim lastRow As Long, i As Long
+    
+    lastRow = wsMaster.Cells(wsMaster.Rows.count, "A").End(xlUp).Row
+    
+    For i = 3 To lastRow
+        If Trim(wsMaster.Cells(i, 1).Value) = county Then
+            wsMaster.Cells(i, col).Value = count
+            Exit Sub
+        End If
+    Next i
+End Sub
+
+' ===== HELPER SUBS FOR Weekly_Uploads (ProcessWeeklyUploads) =====
+
+Sub AddToCountyUpload(wsUploads As Worksheet, county As String, col As Long, count As Long)
+    '=================================================================
+    ' Add upload count to the correct county row
+    '=================================================================
+    
+    Dim lastRow As Long, i As Long
+    
+    lastRow = wsUploads.Cells(wsUploads.Rows.count, "A").End(xlUp).Row
+    
+    For i = 3 To lastRow
+        If Trim(wsUploads.Cells(i, 1).Value) = county Then
+            wsUploads.Cells(i, col).Value = wsUploads.Cells(i, col).Value + count
+            Exit Sub
+        End If
+    Next i
+End Sub
+
+
+Sub ProcessWeeklyUploads()
+    '=================================================================
+    ' Purpose: Count weekly uploads from Time to Entry data
+    '          Count reports ENTERED in columns L, R, V, X
+    '          Write results to Weekly_Uploads sheet
+    '=================================================================
+    
+    On Error GoTo ErrorHandler
+    
+    Dim wsData As Worksheet
+    Dim wsUploads As Worksheet
+    Dim startDate As Date, endDate As Date
+    Dim dateHeader As String
+    Dim targetCol As Long
+    Dim lastRow As Long, i As Long
+    Dim county As String
+    Dim uploadCount As Long
+    
+    ' Set worksheet references
+    Set wsData = ThisWorkbook.Sheets("Sheet1")
+    Set wsUploads = ThisWorkbook.Sheets("Weekly_Uploads")
+    
+    ' Get date range from user
+    Dim startDateStr As String, endDateStr As String
+    startDateStr = InputBox("Enter start date (Monday) in format MM/DD/YYYY:", _
+                           "Start Date", "11/10/2025")
+    If startDateStr = "" Then Exit Sub
+    
+    endDateStr = InputBox("Enter end date (Sunday) in format MM/DD/YYYY:", _
+                         "End Date", "11/16/2025")
+    If endDateStr = "" Then Exit Sub
+    
+    ' Convert to dates
+    startDate = CDate(startDateStr)
+    endDate = CDate(endDateStr)
+    
+    ' Create date header
+    dateHeader = startDateStr
+    
+    ' Find or create column for this date
+    targetCol = FindOrCreateDateColumn(wsUploads, dateHeader)
+    
+    ' Initialize all counties to 0
+    Dim counties As Variant
+    counties = GetAllCounties()
+    
+    Dim j As Integer
+    For j = 0 To UBound(counties)
+        wsUploads.Cells(j + 3, targetCol).Value = 0  ' Row 3 starts county data
+    Next j
+    
+    ' Count uploads from Sheet1 data
+    lastRow = wsData.Cells(wsData.Rows.count, "A").End(xlUp).Row
+    
+    For i = 2 To lastRow  ' Start at row 2 (assuming row 1 is headers)
+        county = Trim(wsData.Cells(i, 1).Value)  ' Column A - County (abbreviated)
+        county = GetFullCountyName(county)  ' Convert abbreviation to full name
+        
+        If county <> "" Then
+            uploadCount = 0
+            
+            ' Check Column L (12) - Inventory Report Entered
+            If IsDateInRange(wsData.Cells(i, 12).Value, startDate, endDate) Then
+                uploadCount = uploadCount + 1
+            End If
+            
+            ' Check Column R (18) - EZ Accounting Report Entered
+            If IsDateInRange(wsData.Cells(i, 18).Value, startDate, endDate) Then
+                uploadCount = uploadCount + 1
+            End If
+            
+            ' Check Column V (22) - Annual Report Entered
+            If IsDateInRange(wsData.Cells(i, 22).Value, startDate, endDate) Then
+                uploadCount = uploadCount + 1
+            End If
+            
+            ' Check Column X (24) - Comprehensive Report Entered
+            If IsDateInRange(wsData.Cells(i, 24).Value, startDate, endDate) Then
+                uploadCount = uploadCount + 1
+            End If
+            
+            ' If any reports were uploaded, add to county total
+            If uploadCount > 0 Then
+                Call AddToCountyUpload(wsUploads, county, targetCol, uploadCount)
+            End If
+        End If
+    Next i
+    
+    ' Calculate weekly total
+    wsUploads.Cells(24, targetCol).Value = Application.WorksheetFunction.Sum(wsUploads.Range(wsUploads.Cells(3, targetCol), wsUploads.Cells(23, targetCol)))
+    wsUploads.Cells(24, targetCol).Font.Bold = True
+    
+    MsgBox "Weekly uploads processed for week " & dateHeader & vbCrLf & _
+           "Results written to Weekly_Uploads sheet, column " & targetCol & vbCrLf & vbCrLf & _
+           "Total uploads: " & wsUploads.Cells(24, targetCol).Value, vbInformation
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "Error " & Err.Number & ": " & Err.Description, vbCritical
+End Sub
+
+
+
+Function FindDateColumn(ws As Worksheet, dateHeader As String) As Long
+    '=================================================================
+    ' Find existing date column (returns 0 if not found)
+    '=================================================================
+    
+    Dim lastCol As Long, col As Long
+    
+    lastCol = ws.Cells(2, ws.Columns.count).End(xlToLeft).Column
+    
+    For col = 2 To lastCol
+        If ws.Cells(2, col).Value = dateHeader Then
+            FindDateColumn = col
+            Exit Function
+        End If
+    Next col
+    
+    ' Not found - return 0
+    FindDateColumn = 0
+End Function
+
+
+Sub CalculateClearanceRates()
+    '=================================================================
+    ' Purpose: Calculate clearance rates from MASTER SHEET and Weekly_Uploads
+    '          Clearance Rate = Completed - Uploaded
+    '=================================================================
+    
+    On Error GoTo ErrorHandler
+    
+    Dim wsMaster As Worksheet
+    Dim wsUploads As Worksheet
+    Dim wsSummary As Worksheet
+    Dim dateHeader As String
+    Dim masterCol As Long, uploadCol As Long, summaryCol As Long
+    Dim i As Long
+    Dim completed As Long, uploaded As Long, clearanceRate As Long
+    
+    ' Set worksheet references
+    Set wsMaster = ThisWorkbook.Sheets("MASTER SHEET")
+    Set wsUploads = ThisWorkbook.Sheets("Weekly_Uploads")
+    Set wsSummary = ThisWorkbook.Sheets("Clearance_Rate_Summary")
+    
+    ' Get date from user
+    dateHeader = InputBox("Enter the date to calculate clearance rate for (MM/DD/YYYY):" & vbCrLf & _
+                         "This should match a date you've already processed.", _
+                         "Calculate Clearance Rate", "11/10/2025")
+    If dateHeader = "" Then Exit Sub
+    
+    ' Find the date column in both source sheets
+    masterCol = FindDateColumn(wsMaster, dateHeader)
+    uploadCol = FindDateColumn(wsUploads, dateHeader)
+    
+    ' Check if dates exist
+    If masterCol = 0 Then
+        MsgBox "Date " & dateHeader & " not found in MASTER SHEET." & vbCrLf & vbCrLf & _
+               "Please run ProcessReportReviewData first for this date.", vbExclamation
+        Exit Sub
+    End If
+    
+    If uploadCol = 0 Then
+        MsgBox "Date " & dateHeader & " not found in Weekly_Uploads sheet." & vbCrLf & vbCrLf & _
+               "Please run ProcessWeeklyUploads first for this date.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Find or create column in summary sheet
+    summaryCol = FindOrCreateDateColumn(wsSummary, dateHeader)
+    
+    ' Calculate clearance rates for each county (rows 3-23)
+    For i = 3 To 23
+        completed = 0
+        uploaded = 0
+        
+        ' Get completed count from MASTER SHEET
+        If IsNumeric(wsMaster.Cells(i, masterCol).Value) Then
+            completed = wsMaster.Cells(i, masterCol).Value
+        End If
+        
+        ' Get uploaded count from Weekly_Uploads
+        If IsNumeric(wsUploads.Cells(i, uploadCol).Value) Then
+            uploaded = wsUploads.Cells(i, uploadCol).Value
+        End If
+        
+        ' Calculate clearance rate: Completed - Uploaded
+        clearanceRate = completed - uploaded
+        
+        ' Write to summary sheet
+        wsSummary.Cells(i, summaryCol).Value = clearanceRate
+    Next i
+    
+    ' Calculate total for row 24
+    wsSummary.Cells(24, summaryCol).Value = _
+        Application.WorksheetFunction.Sum(wsSummary.Range(wsSummary.Cells(3, summaryCol), _
+                                                           wsSummary.Cells(23, summaryCol)))
+    wsSummary.Cells(24, summaryCol).Font.Bold = True
+    
+    ' Apply heatmap formatting to the clearance rate column
+    Call ApplyHeatmapToColumn(wsSummary, summaryCol)
+    
+    ' Show success message
+    MsgBox "Clearance rates calculated for week " & dateHeader & vbCrLf & vbCrLf & _
+           "Results written to Clearance_Rate_Summary sheet" & vbCrLf & _
+           "Column: " & summaryCol & vbCrLf & _
+           "Total clearance: " & wsSummary.Cells(24, summaryCol).Value & vbCrLf & vbCrLf & _
+           "Positive numbers = Catching up" & vbCrLf & _
+           "Negative numbers = Falling behind" & vbCrLf & _
+           "Zero = Keeping pace", vbInformation, "Success"
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "Error " & Err.Number & ": " & Err.Description, vbCritical
+End Sub
+
+Sub ApplyHeatmapToColumn(ws As Worksheet, col As Long)
+    '=================================================================
+    ' Apply color-coded heatmap to clearance rate column
+    ' GREEN = Positive (caught up)
+    ' YELLOW = Zero (keeping pace)
+    ' RED = Negative (falling behind)
+    '=================================================================
+    
+    Dim i As Long
+    Dim cellValue As Variant
+    
+    ' Apply formatting to county rows (3-23)
+    For i = 3 To 23
+        cellValue = ws.Cells(i, col).Value
+        
+        ' Clear any existing formatting
+        ws.Cells(i, col).Interior.Pattern = xlSolid
+        
+        If IsNumeric(cellValue) Then
+            If cellValue > 0 Then
+                ' Positive = GREEN (caught up)
+                ws.Cells(i, col).Interior.Color = RGB(198, 239, 206)  ' Light green
+                ws.Cells(i, col).Font.Color = RGB(0, 97, 0)           ' Dark green text
+                
+            ElseIf cellValue = 0 Then
+                ' Zero = YELLOW (keeping pace)
+                ws.Cells(i, col).Interior.Color = RGB(255, 235, 156)  ' Light yellow
+                ws.Cells(i, col).Font.Color = RGB(156, 101, 0)        ' Dark yellow text
+                
+            Else ' cellValue < 0
+                ' Negative = RED (falling behind)
+                ws.Cells(i, col).Interior.Color = RGB(255, 199, 206)  ' Light red
+                ws.Cells(i, col).Font.Color = RGB(156, 0, 6)          ' Dark red text
+            End If
+            
+            ' Make negative numbers easier to see
+            If cellValue < 0 Then
+                ws.Cells(i, col).Font.Bold = True
+            End If
+        End If
+    Next i
+    
+    ' Format total row (24) - special formatting
+    cellValue = ws.Cells(24, col).Value
+    
+    If IsNumeric(cellValue) Then
+        ws.Cells(24, col).Font.Bold = True
+        ws.Cells(24, col).Interior.Pattern = xlSolid
+        
+        If cellValue > 0 Then
+            ' Positive total = Strong green
+            ws.Cells(24, col).Interior.Color = RGB(146, 208, 80)     ' Brighter green
+            ws.Cells(24, col).Font.Color = RGB(0, 97, 0)
+            
+        ElseIf cellValue = 0 Then
+            ' Zero total = Strong yellow
+            ws.Cells(24, col).Interior.Color = RGB(255, 192, 0)      ' Brighter yellow
+            ws.Cells(24, col).Font.Color = RGB(156, 101, 0)
+            
+        Else
+            ' Negative total = Strong red
+            ws.Cells(24, col).Interior.Color = RGB(255, 0, 0)        ' Bright red
+            ws.Cells(24, col).Font.Color = RGB(255, 255, 255)        ' White text for contrast
+        End If
+    End If
+End Sub
+
+
+
+
+
+
+
+
