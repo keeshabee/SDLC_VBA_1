@@ -1,0 +1,15 @@
+Task ID	Priority	Task Description	Category	Status	Due Date	Est. Time	Notes	Completed Date	Blocker
+1	HIGH	Review Brooke's files - identify root cause of doubling issue	Analysis	Not Started	02/24/26	30 min	Check Data sheet for duplicates and verify macro logic		Need Brooke's file
+2	HIGH	Review Brooke's files - identify missing report types in upload count	Analysis	Not Started	02/24/26	30 min	Confirm all 6 report type columns in Sheet1		
+3	CRITICAL	Fix Issue #1: MASTER SHEET doubling counts	Coding	Not Started	02/25/26	1 hour	Update ProcessReportReviewData macro or provide data handling instructions		
+4	CRITICAL	Fix Issue #2: Weekly Uploads undercounting	Coding	Not Started	02/25/26	1 hour	Add missing report types to ProcessWeeklyUploads macro		
+5	HIGH	Test fixes with Brooke's actual data	Testing	Not Started	02/26/26	1 hour	Run all 3 macros with her data to verify fixes work		
+6	MEDIUM	Document root causes and solutions	Documentation	Not Started	02/26/26	30 min	Create summary of what was broken and how it was fixed		
+7	HIGH	Update macro code in SharePoint synced file	Deployment	Not Started	02/26/26	30 min	Save corrected macros to synced folder		
+8	HIGH	Create updated user instructions for Brooke	Documentation	Not Started	02/27/26	45 min	Include any new workflow steps or data requirements		
+9	MEDIUM	Test end-to-end workflow with sample data	Testing	Not Started	02/27/26	1 hour	Full UAT of all 3 macros after fixes		
+10	HIGH	Send updated files and instructions to Brooke	Deployment	Not Started	02/27/26	15 min	Email with summary of fixes and next steps		
+11	MEDIUM	Schedule follow-up call with Brooke	Communication	Not Started	02/28/26	30 min	Walk through fixes and answer questions		
+12	LOW	Update internal documentation (V drive)	Documentation	Not Started	02/28/26	30 min	Document issues found and resolutions for future reference		
+13	LOW	Update handoff emails if needed	Documentation	Not Started	02/28/26	15 min	Revise instructions based on lessons learned		
+14	MEDIUM	Send completion summary to team (Cheryl/Kristi/Candice)	Communication	Not Started	02/28/26	15 min	Project status update		
