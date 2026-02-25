@@ -1,88 +1,197 @@
-
-GMS CLEARANCE RATE TRACKING - USER TESTING SCRIPT
+MANUAL TESTING INSTRUCTIONS FOR STEVEN
 ==================================================================
-Date: [Tomorrow]
-Tester: Brooke
-Facilitator: Keisha
-Duration: ~30 minutes
+Purpose: Double-check that the macros are counting correctly
+Time needed: About 20-30 minutes per week
 
 ==================================================================
-OVERVIEW FOR BROOKE
+ðŸ“‹ WHAT YOU'RE CHECKING
 ==================================================================
 
-Today we're testing three automation macros that will save you hours each week:
+You'll manually count reports for 2 weeks:
+- Week 1: December 15-21, 2025
+- Week 2: January 5-11, 2026
 
-1. **Macro #1**: Processes Report Review data → Updates MASTER SHEET
-2. **Macro #2**: Counts weekly uploads → Updates Weekly_Uploads sheet
-3. **Macro #3**: Calculates clearance rates → Updates Clearance_Rate_Summary
+You'll check TWO things:
+1. Sheet1 (Time to Entry data) - count UPLOADED reports
+2. Data sheet (Completed Reviews) - count COMPLETED reports
 
-You'll test with actual data from a recent week (suggest 11/24-11/30).
-
-==================================================================
-BEFORE WE START - SETUP CHECK
-==================================================================
-
-Keisha verifies:
-☐ Workbook: GMS_Clearance_Rate_Tracking.xlsm is open
-☐ All three buttons are visible on their respective sheets
-☐ Brooke has Report Review export file ready
-☐ Brooke has Time to Entry export file ready
-☐ Test week identified: 11/24/2025 to 11/30/2025
+Then compare your manual counts to what the macro calculated.
 
 ==================================================================
-TEST SCENARIO #1: PROCESS COMPLETED REPORTS
+ðŸŽ¨ SETUP: HIGHLIGHT THE 4 REPORT COLUMNS IN SHEET1
 ==================================================================
 
-**What You're Testing:** Automating the weekly Report Review data processing
+Before you start, I'll highlight the 4 important columns in Sheet1 
+with these colors so you know which ones to count:
 
-**STEPS:**
+Column with "Inventory Entered" dates â†’ YELLOW highlight
+Column with "EZ Accounting Entered" dates â†’ GREEN highlight
+Column with "Annual Entered" dates â†’ BLUE highlight
+Column with "Comprehensive Entered" dates â†’ ORANGE highlight
 
-1. **Locate your Report Review export file**
-   - This is the weekly report you download from eCourts
-   - Should show completed reports by county for the week
+These are the ONLY 4 columns you need to count.
 
-2. **Open the Report Review file**
-   - Open in Excel
+==================================================================
+PART 1: CHECKING SHEET1 (UPLOADED REPORTS)
+==================================================================
 
-3. **Copy the data**
-   - Select ALL the data (county names and counts)
-   - Include headers: County Name, Annual Report, Comprehensive Accounting, etc.
-   - Press Ctrl + C to copy
+GOAL: Count how many reports were uploaded during each week
 
-4. **Switch to GMS_Clearance_Rate_Tracking workbook**
-   - Click on the **Data** sheet tab
+------------------------------------------------------------------
+WEEK 1: December 15-21, 2025
+------------------------------------------------------------------
 
-5. **Paste the data**
-   - Click on cell **A1**
-   - Press Ctrl + V to paste
-   - Confirm data looks correct
+STEP 1: Filter the data
+1. Click on the YELLOW column (Inventory Entered)
+2. Click the dropdown arrow in the header
+3. Click "Date Filters" â†’ "Between"
+4. Enter: 12/15/2025 to 12/21/2025
+5. Click OK
 
-6. **Click the "Process Completed Reports" button**
-   - Button should be in the top right area of the sheet
+STEP 2: Count the results
+- Look at the bottom of Excel (status bar)
+- It will say "Count: X" (this is how many rows matched)
+- Write down this number: Inventory = ___
 
-7. **Enter start date when prompted**
-   - Format: MM/DD/YYYY
-   - Example: 11/24/2025
-   - Click OK
+STEP 3: Clear the filter
+- Click "Clear Filter" (or Data â†’ Clear)
 
-8. **Enter end date when prompted**
-   - Format: MM/DD/YYYY
-   - Example: 11/30/2025
-   - Click OK
+STEP 4: Repeat for the other 3 columns
+- GREEN column (EZ Accounting): Filter 12/15/2025 to 12/21/2025 â†’ Write count: ___
+- BLUE column (Annual): Filter 12/15/2025 to 12/21/2025 â†’ Write count: ___
+- ORANGE column (Comprehensive): Filter 12/15/2025 to 12/21/2025 â†’ Write count: ___
 
-9. **Wait for success message**
-   - Should say: "Report Review data processed for week..."
-   - Click OK
+STEP 5: Add them all up
+- Inventory: ___
+- EZ Accounting: ___
+- Annual: ___
+- Comprehensive: ___
+- **TOTAL UPLOADED (Week 1): ___** â† This is your manual count
 
-10. **Verify results in MASTER SHEET**
-    - Click on **MASTER SHEET** tab
-    - Look for your date (11/24/2025) in column B
-    - Check a few counties - do the numbers look right?
-    - Check row 24 (TOTAL FOR WEEK) - does it match your export?
+STEP 6: Compare to macro output
+- Go to "Weekly_Uploads" sheet
+- Find the column with "12/15/2025" at the top
+- Look at the TOTAL row at the bottom
+- Does it match your manual count? âœ“ or âœ—
 
-**VALIDATION QUESTIONS:**
-- Does the date appear in column B of MASTER SHEET? YES / NO
-- Do the county numbers match your Report Review export? YES / NO
+------------------------------------------------------------------
+WEEK 2: January 5-11, 2026
+------------------------------------------------------------------
+
+Repeat the exact same steps above, but use these dates:
+- Filter each colored column for: 1/5/2026 to 1/11/2026
+- Count each one
+- Add them up
+- Compare to "Weekly_Uploads" sheet column "1/5/2026"
+
+==================================================================
+PART 2: CHECKING DATA SHEET (COMPLETED REPORTS)
+==================================================================
+
+GOAL: Count how many reports were completed during each week
+
+NOTE: The Data sheet looks different each week! 
+- Sometimes it has 2 columns of numbers, sometimes 3, sometimes 4
+- This is NORMAL and expected
+- The last column is always the TOTAL (ignore it)
+
+------------------------------------------------------------------
+WEEK 1: December 15-21, 2025
+------------------------------------------------------------------
+
+STEP 1: Look at the Data sheet header (row 1)
+You'll see something like:
+- Column A: County Name
+- Column B: [Report Type] Count (example: "Inventory Count")
+- Column C: [Report Type] Count (example: "EZ Accounting Count")
+- Column D: Count â† This is the TOTAL (ignore this!)
+
+STEP 2: Count the columns (NOT including Total)
+- How many columns are there BEFORE the "Count" column?
+- Example: If you see "Inventory Count" and "EZ Accounting Count" and then "Count"
+  â†’ You have 2 report columns
+
+STEP 3: Pick ONE county to manually check
+- Pick Bergen (usually the biggest numbers, easy to verify)
+- Look at Bergen's row
+- Write down the number in EACH report column (skip the Total column)
+
+Example:
+- Column B (Inventory Count): 16
+- Column C (EZ Accounting Count): 42
+- Add them: 16 + 42 = 58
+
+STEP 4: Compare to macro output
+- Go to "MASTER SHEET"
+- Find the column with "12/15/2025" at the top
+- Look at Bergen's row
+- Does the number match what you calculated? âœ“ or âœ—
+
+------------------------------------------------------------------
+WEEK 2: January 5-11, 2026
+------------------------------------------------------------------
+
+Repeat the same steps:
+1. Look at the Data sheet columns
+2. Count how many report columns there are (ignore "Count" total column)
+3. Pick Bergen (or any county)
+4. Add up the numbers from each report column
+5. Compare to MASTER SHEET column "1/5/2026"
+
+==================================================================
+ðŸ“ REPORT YOUR FINDINGS
+==================================================================
+
+Fill out this simple checklist and send it back to me:
+
+WEEK 1 (12/15-12/21/2025):
+â˜ Sheet1 (Uploaded): Manual count ___ vs Macro count ___ â†’ Match? ___
+â˜ Data sheet (Completed): Manual count ___ vs Macro count ___ â†’ Match? ___
+
+WEEK 2 (1/5-1/11/2026):
+â˜ Sheet1 (Uploaded): Manual count ___ vs Macro count ___ â†’ Match? ___
+â˜ Data sheet (Completed): Manual count ___ vs Macro count ___ â†’ Match? ___
+
+Any differences or issues you noticed:
+_________________________________________________________________
+_________________________________________________________________
+
+==================================================================
+ðŸ’¡ TIPS
+==================================================================
+
+âœ“ Take your time - accuracy is more important than speed
+âœ“ Write down each count as you go (don't try to remember)
+âœ“ If the Data sheet looks different between weeks, that's NORMAL
+âœ“ The macro should always match your manual count
+âœ“ If something doesn't match, write down which week and what the difference was
+
+==================================================================
+â“ TROUBLESHOOTING
+==================================================================
+
+Q: I don't see a dropdown arrow in the column header
+A: Click anywhere in the data, then go to Data tab â†’ Filter
+
+Q: The status bar doesn't show "Count"
+A: Right-click the status bar at the bottom â†’ make sure "Count" is checked
+
+Q: The Data sheet has different columns than you described
+A: That's OK! Just count all columns EXCEPT the last one (which says just "Count")
+
+Q: I filtered but got way too many results
+A: Make sure you're filtering the "Entered" date column (the highlighted one)
+   NOT the "Filed" date column
+
+==================================================================
+
+Questions? Just ask!
+
+==================================================================
+
+
+
+
 - Is the total at the bottom correct? YES / NO
 
 **ANTICIPATED QUESTIONS:**
@@ -172,44 +281,7 @@ A: It counts any reports with "Entered" dates in columns L, R, V, X that fall wi
 TEST SCENARIO #3: CALCULATE CLEARANCE RATES
 ==================================================================
 
-**What You're Testing:** Calculating clearance rates (Completed - Uploaded)
-
-**STEPS:**
-
-1. **Go to Clearance_Rate_Summary sheet**
-   - Click the **Clearance_Rate_Summary** tab
-
-2. **Click the "Calculate Clearance Rates" button**
-
-3. **Enter the date when prompted**
-   - Enter START date only: 11/24/2025
-   - Click OK
-
-4. **Wait for success message**
-   - Should say: "Clearance rates calculated for week..."
-   - Shows total clearance (positive or negative)
-   - Click OK
-
-5. **Review the results**
-   - Look at column B (should have 11/24/2025 header)
-   - Look at the numbers:
-     * **Positive numbers (green)** = County caught up
-     * **Negative numbers (red)** = County fell behind
-     * **Zero (yellow)** = County kept pace
-   - Check row 24 for overall clearance
-
-**VALIDATION QUESTIONS:**
-- Does the date appear in column B? YES / NO
-- Do the clearance rates make sense? (Completed - Uploaded = Rate) YES / NO
-- Can you identify which counties are falling behind? YES / NO
-
-**ANTICIPATED QUESTIONS:**
-
-Q: "Why are most numbers negative?"
-A: Negative means more reports came IN than were completed. This is normal and tells you which counties need more volunteer support.
-
-Q: "What does the total clearance rate mean?"
-A: It's the net change for all counties combined. Negative = system-wide backlog growing.
+**What You're Testing:** change for all counties combined. Negative = system-wide backlog growing.
 
 Q: "Can I see which counties need the most help?"
 A: Yes! Look for the largest negative numbers (most behind) or sort the column.
