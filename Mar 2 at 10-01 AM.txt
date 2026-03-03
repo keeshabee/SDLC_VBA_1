@@ -1,0 +1,151 @@
+His position. Yes, the joy is fun, one. Hey Cheryl. And I'll, um, I'll just record this. Just so, like, you know, we have to go back to it, right? Thank you.
+
+Do you want me to start off where I pull the data from? Yes. Okay, so it's from the top to entry that we get every Monday that we get sent to us. I know Keisha gets copied sometimes on that one. Christine disperses it out to us. Um, this was done originally because one of the counties the judge had asked me, like, hey, how long we taking to get to the point, like, so we're using in the time to entry.
+
+And if you want, I can pull one up or Keisha if you want to pull one up, let me just actually. Let me pull up the today's. That's probably the easiest way. Yeah. Um.
+
+Hang once again, just pulling up. It's taking a hot minute.
+
+Hello! Yeah, we can hear you. Um, well.
+
+So, let me.
+
+Okay. So, I'm gonna put this up. Okay, let me know when you guys see that?
+
+Okay. All right. So let me move you guys over, hang up. All right. So what I use on the time to entry if you see here column C and D? Guardianship filed and guardianship date. That's really what I'm looking at. So they can have secondary judgments and things, but I just primarily use this because it usually means the first time it's going to court and usually when we get this question or this inquiry.
+
+It's really related to the last year last two years last three years. So last time I think we did this for the report in September last year. We provided um 2021 through 2024. Um, and what that really means is, I would go into our data. Her, sorry, not. This is a kind of a raw she I just got today.
+
+Um, so I'd go kind of in here. And I, I would run, you know, just the ones? Let's say 2024. Sorry, I use a mouse usually, and I'm not using one right this hot second.
+
+And of course she'll mommy. They're just like.
+
+Okay, so if I was using just 2024 filings? Oh my gosh, this thing.
+
+It does seem to do that. Are you clicking front of the left because I would? You might not be picking up. I know that I have three sometimes.
+
+There it is. So, it kind of gives you the big group of 2024, and here's the dates that runs by. And then, I kind of generally extract this, and I just do how many days from this to ending where the Judgment date is? Okay, keeping in mind that 2024, you could have something filed obviously in December 24, and then it comes out in 25, so there can be a very big gap, so generally we run when we do the the look back when we did it.
+
+Last year we did through 24, because 25 is too tight, you know, we didn't want to cut off a set of data. Um, and we do have cases that run over a year. Generally, they they are normally heard within six to eight weeks. Um, eat up to three months.
+
+The the time to resolution. I think the average at that point was like 101 days, so it is generally three months ish because they have a background check process, they have to go through with some of the Guardians. However, we were having some counties were outliers in that. They were over that time limit, and so they did a couple of adjustments over the last couple years to make themselves more into the average time frame, and that's what that judge was asking, and they kind of used that to kind of as a feedback loop to adjust their processes, and so really, then it kind of kicked us off looking.
+
+I mean, we used it last year in our metrics to show a look back, and we've subsequently had. Brothers come up in at least one other County, where it's known anecdotally from attorneys and. Um. Litigants that the time to disposition has gotten a lot longer and in an effort working with the.
+
+Percentages. I've had questions from tcas and civil Division managers, for example. Like, you know, what can we do from a data perspective because they believe the problem is with this surrogate, but they're not entirely able to, you know, discern that? Um, they want to know what metrics are available to be able to go back and identify where the problem is and be able to address it.
+
+The times of disposition is an important data point for that. You know that that we can say, you know, if it was filed on this date and the judgment wasn't entered until this date, um, they can then take that back to the surrogate and say, what are you doing in your process that it's taking so long?
+
+Because it's not on the judgment, you know, the judge is, you know, or conversely, you know, if there ends up being a judge problem, then they can address it with the judge as well. So, a couple of data issues just to kind of, consider, and keep in mind when I go through this the the gargent file date is pulled here and then subtracting.
+
+It's usually just judgment date minus days, and we get days. You do have to, um? Deduplicate as a huge issue, so every one of these lines you'll have multiple lines because this. These two Fields are for every upload. In that case, that you will see them there. So, you just want to make sure you.
+
+Do you know what I mean in order to kind of compress the records, uh, or? Consolidate the records because of the time duplication. So, every time there's a document inventory is uploaded, well, it will still say Judgment Day Guardianship file date, and then it will go into which of these fields down here.
+
+Um, were uploaded. Um, so you have to kind of look at that and just kind of get rid of a whole bunch of data. And then, if you're looking by County and really, that's what we wanted to be able to do is have a pivot table to really distinctly discuss, you know, okay, this is a problem in Essex, but not a problem.
+
+In Morris, this is a problem in, you know, Bergen, but not empathetic. That kind of thing? Um, and what that County's average is versus other counties. And then what? This state averages? And then we want it definitely by year.
+
+So, we definitely we had 21, 22, 23, 24. I think the last report we did. We did a three-year look back, and we definitely don't want to have in the current year, so it sounds weird, but we don't need. Like, I don't need 26, it just started. Um, I would probably run it.
+
+July 1 to include 2025, so it gives them a full 18 months to get through, and even at that, there is some outlier with that, because December stuff will only be given six months to kind of clear. Yeah, we want to give as many cases as possible a chance to close after they've been open.
+
+So, if you file a complaint? On December 31st. You know, we don't want to run the report. In January, you know and have that captured. We want to make sure that we, um, give it time to be disposed. I should say, too, that another reason for this report, um?
+
+If you think back to a few years ago, we implemented the guardian background screening policy, which all takes place in between the filing of the complaint and the entry of the judgment, and it was suspected at that point and one of the arguments against it was that it was going to lengthen that time to disposition.
+
+And we didn't have data. At that point, we weren't able to develop these metrics. Um, to show the difference in the time to disposition from before the policy was implemented. After the policy was implemented, we know that the time has lengthened. Um, but you know if in the future we have policies like that that are going to affect the times of this position, then at least we can be able to accurately capture and track it and report back on it.
+
+Okay, any questions? Yeah, um, okay. So, you're saying that you want it to start July 1st? As far as like capturing it yearly. I just want to get a clarification on that. Yeah, we're running it, running it on July 1st. But capturing the numbers ending the previous December 31st.
+
+Got it, so not like our other reports would capture. The first six months? So, July 1st would be capturing numbers from January 1st to June 30th, right? Those would be different because we don't want to. We don't want to penalize cases that were filed too late in the year the previous year, so it would be run it on July 1st for the calendar year.
+
+Of the prior year, got it. Yeah, and and looking back, you know, the number of years that we talked about, right? So, July 1st, we'll be running. You then run, be able to run 2025. Yeah, yeah, calendar year, yeah there. I mean, again, there is a little bit of a bias in the sense that you know the December cases really are not giving the full, like, hey, they could take a year two to clear, but it's so few of them.
+
+Like, I said, when you look at the averaging of the other years when we've had it generally. You don't have cases that run up to a year. It's generally the case that. Um, yeah. They're getting done faster than that in court. Yeah, that would be a big anomaly for a case to be like that and?
+
+Oh, so, what year you wanted it until 2024? The next time we run the report, it'll adjust. Does that make sense, too? Is that like, you know, you have those exact numbers? The forecast comes down, right? What men didn't just come out later. It'll adjust in the next time we run the next year.
+
+Exactly like the like, the clearance, right, forecast, yeah, okay. And then, which you wanted to start, um 2024, or earlier than that. We did 21 through 24, so I think in the July of this year if we could run 22. So 22, 23, 24, 25, was, yeah, so starting.
+
+Yeah, um. Um, I'm sorry, starting December 1st of 2022.
+
+It would be starting 2021 January, yes. Calendar year, so 2022, should be. January 1 through December 31st, 22, then it would be 23, 24, and 25. Got it. Okay, so at any point we can say we have a four-year comparison. Okay. Makes sense, and it's not meant to be all four years together.
+
+It's one year, one year, one year, one year.
+
+Okay, that way we can look at how the times is. This position may have changed over time, both Statewide and within individual counties. Yeah, okay. And since you're looking at like a Time series, um? Did you want any type of formatting in there, like a color code formatting like?
+
+Are there certain, um? Range buckets that, you know, kind of like what we did with the other one. Where, oh, if they're over that three month Mark, they should. They should be like certain Flags color flags to those. So we don't have. A backlog. The standard particular to guardianship, okay?
+
+Guardianship falls under the 12-month backlog standard that applies to probate in general. Um. I mean. Would it be helpful to have color coding for any that are over 12 months? It probably would just to say, you know, to align with. The backlog. Yeah, exactly. The the Chief justices and judge, please emphasis on reducing backlog.
+
+I think that, and again, it's a rare case that a guardianship case ends up in backlog, but nevertheless, and it's usually because you know family members are fighting or the person just really, really does not believe that they're incapacitated, Etc. So, um. So it, I guess that would be the example of where the color coding would be helpful if it's?
+
+Over 12 months between the? Probably get a complaint to the entry of judgment that would be. That would be helpful. Okay.
+
+And then that also in turn would give us like, okay, now we know. Um. I mean, we're are. We talking about this as a detail report, I guess. I think it, you know, just like, you know, the visualization? Yeah, yeah, it's more. It's more so for you, with, like, would that help you, right?
+
+You don't really have to, right? Yeah. Yeah, I, yeah, I think. Okay, I started in my mind, thinking of it as a detailed report where we would be able to see individual docket numbers that were. In backlog, but I don't. I don't know that. That's, that's not what we're going for here.
+
+Yeah, I'm just bringing up. I'm trying to bring up where we used it. So, we actually talked about it. I don't think it's in that report. I think it's a few reports back. Um. And I don't remember exactly which one it was. It might have been. Last spring or the fall before, but we can send you like the.
+
+The chart that we used to, you know, visually represent in our. Yeah, yeah, um. Yeah, I do think there is a piece like the green, like, hey, here's the green, you know, if everybody Falls within the AB again, it's average, so you would initially? Yeah, okay, I mean, it could be ninety days and under, which means, like, in a stellar place where you're getting done in three months, and then it could be anything over 90 days, but under a year could be the yellow meaning and yellow, just like.
+
+It's acceptable, you know what I mean, and the reality is, we're really not going to attend because it's not backlogging, and then anything over the the one year, mark yeah, is hey, because I think the thing is, we want to look at it, as the average is not going to end up being over a year, anyway, the average it might just be.
+
+Hey, how many cases, and I don't know. I don't know if Keisha or Steve if this was helpful, but like it might be helpful to know hey. In Essex, they had 16 cases that were over a year versus no other County had any over a year. You know, what I mean, that that's kind of the level that might be granular?
+
+As a, you know, in any one year, as like a pivot piece to pull out. Um. I hope you have the average for any of them is not going to be over a year. It's going to be more like 150 or 180 days. Yeah, but it's helpful to know that hey, and we might want to pull in, you know, 99ers, like, kind of like a?
+
+Like a diamond, you know, it's like a great reading versus, um. You know 92? I'll pull up some of my past polls, and then we'll come up with some buckets for you to get like a green, yellow, and a red. Yeah, so that's what. That's why I just popped this up, so I mean this is a different job.
+
+But something like this? I, I think that's what I was trying to get. A, a better understanding that you know within what, what is your green? Would it be zero to three months, and then what is kind of like you're on track or approaching? And then, what is the your outliers or your anomalies like, what would fall into the red?
+
+So it sounds like, um, over a year, would be more like the red, but then anything else. Yeah, for four to 12 months. Would be kind of like yellow and zero to three green. Right, okay, right? And there might be so again. There might be two pieces and I and I want to think about this for a second.
+
+There might be like in any one County. The actual granular level of like the on a case level, how many went over a year, because that's important just to know how men like account of how many went over a year for the individual level, but the average is not going to really ever be a year for any one County at all, because there's too many cases across the Spectrum that will bring that average down.
+
+I think the highest I was seeing was like? 155, you know what I mean? For an average across the state and those were in two counties, okay. So, when I look at them. Like, I'll give you a bucket level for the average in the county full-on, aggregated, and then maybe we give you either if it's possible to have a secondary analysis that is the case levels for each County and then count of how many cases went above the actual backload backlog?
+
+Criteria of the year. Does that make sense? Yeah, that does okay. Okay, this will be two pieces of an ounce, like case cases within a county and the count of how many went above the backlog level, and then just the county averages, and we'll give you. We'll give you a red, yellow, green looking at some of the data we already have.
+
+Okay, I think that's more helpful. Okay, okay, so two criteria pieces, okay? And then you had mentioned that you wanted, um? You know? Like, in this case, it would be 4 years, so four separate reports. So, now, are they still in? Uh, I guess workbook, or are they still on one work?
+
+Yeah. Like how? As far as the layout. One workbook would be great and the way that we presented this data in our cjf. It was. Just in one chart with Statewide, the average for and again I, I can't remember what time periods. Was, but let's say, you know, it was comparing.
+
+2021 to 2022 to 2023, like it was, like, the simplest, simplest. Bar graph kind of thing like, just as I recall, like? 2021 was, you know, X? Number of days 2022 was? Why number of days, and it was a longer time period. And then, 2023 was Z number of days.
+
+And you know, through the efforts of the, you know, bringing awareness to it in various counties. That number was able to be brought down again. Or, it might have been like, you know, just from high to low. I can't remember off the top of my head, but it was again super simple for the sake of that, like executive reporting, management reporting piece, um.
+
+So, so the numbers all this to say, like it, would be helpful to have the numbers all in one workbook, so that then that table, you know, could be generated very easily, right, right? Okay, yeah. Plus the fact that in one workbook, we could see that this is snapshot in time, right, that that adjustment that'll happen.
+
+Yeah, like, in our 25 year where the next time we run it, it's going to be different. Yeah, because that time to entry, I mean, it sounds terrible, but there was back loading, so I mean, like, when things got backwarded, drivers got adjusted again. Yeah, and we never know, because that data's only good as today, right?
+
+So, when you run it, it's like, okay, the snapshot is, you know. As July 1, when it was run last year, was this hey, why did the 23 number trains? Who knows? Maybe somebody backloaded three old cases right, and then it adjusted into that? Okay, just keep in mind like this.
+
+Being a macro, you would have to manually go back to all your preceding years and re-run it so that it adjusts to the new numbers reflected from the time to entry, right, uh, report, right? So, right? Yeah. That makes sense. Right, because what we do is when we run it and run the macro, then I would just do like a save.
+
+As for that file for that year, so I know okay, it was done. It's been put to bed. Here's the numbers next year. When we run it, it's using the macro from the current year with the adjustments, and then we would save it as. Okay, so I hear what you're saying, the macro being done.
+
+It's, it's the macro is one thing, but I would do a save as file so that it would represent the snapshot. Oh, okay, so you're just keeping the snapshot. You're not trying to see, like, you're not trying to look at it in a dynamic way. Like, you know how the numbers change?
+
+Like, if the numbers change, you know, um, in a historical year, you're not trying to look at that you're looking at the snapshot for that year. We're looking at Snapchat, cuz then we'll see all the four years. Yeah, static reports. Okay, got it all right. Great. Okay, right? That's why it's gonna cover the four-year span in that workbook.
+
+Okay? So that's. That's the questions that I have for now. I'm pretty sure I'll have some more, and you know, work. You and I, we always expressed. So for now. Now, just just one question I had was, uh, you know, when? When would you like it by, you know, potential due date?
+
+So, this is one that because we don't think it's productive to run it before July 1st. It is not. An urgent priority. There's plenty of time, plenty of time. Today's March 1st so, yeah. Um. You know it again? Sometime in early to July. To make sure that the numbers have been well, again.
+
+I guess we should check it before July 1st to make sure that the macro runs correctly so that then we can actually run it with July 1st numbers. Yeah, yeah, that's what I was thinking, too, like at least to building. Yeah, with the um, the historical years and then well, but then finalize it with the with the new year after July 1st.
+
+Okay. Right? Yes, perfect. Yeah, like the one that? Time to enter your numbers we got today, Keisha. You can use that file to still run like 21, two, three, and four. Yeah, yeah, you know what I mean, just to see, yes, right? Okay.
+
+But we'll definitely get back to you on the numbers, the buckets in terms of the thresholds. Yeah, okay. Sounds good. So, you know, I think, in terms of a due date, like, you know, we can Target? Probably early May. I think that that was really that's very reasonable testing.
+
+That sounds good, okay for the testing. Okay, because it's thinking. Yeah, but then finalizing it. Probably, I guess, like mid-july. Once we get the new, because then that one, it's just uploading the dates at that point, we already have everything pretty much set in motion, so it's really just to update it.
+
+Okay, yeah, yeah, right, right? All right, that's good. We might want to have it. Well, it says we might want to be able to run it so we can run each. Well, it doesn't matter. Actually, one another. I think, July, yeah, comes with the data source in. Yeah, because I can always use an old time to entry from July 1.
+
+So, like, yeah, it won't matter to put the data plug in, right? So, for each year, right? Okay. Okay, thanks guys. Yeah, thank you. Appreciate it. Thank you okay. All right, all right, bye.
+
+Kind of like this one.
