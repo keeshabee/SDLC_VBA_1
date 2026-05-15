@@ -1,0 +1,100 @@
+' =========================================================
+' Sub 3 of 3: Date Calculation & Year Filter
+' Reads CleanData, calculates days to disposition,
+' filters to 2022-2025, flags backlog cases > 365 days
+' =========================================================
+ 
+Sub CalculateDaysToDisposition()
+ 
+    ' --- Declare all variables ---
+    Dim cleanWS    As Worksheet
+    Dim calcWS     As Worksheet
+    Dim lastRow    As Long
+    Dim i          As Long
+    Dim outRow     As Long
+    Dim countyVal  As String
+    Dim docketNum  As String
+    Dim judgDate   As Variant
+    Dim filedDate  As Variant
+    Dim daysCalc   As Long
+    Dim filedYear  As Integer
+ 
+    ' --- Point to the CleanData sheet ---
+    Set cleanWS = ThisWorkbook.Sheets("CleanData")
+ 
+    ' --- Delete old CalcData sheet and create a fresh one ---
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    ThisWorkbook.Sheets("CalcData").Delete
+    Application.DisplayAlerts = True
+    On Error GoTo 0
+    Set calcWS = ThisWorkbook.Sheets.Add
+    calcWS.Name = "CalcData"
+ 
+    ' --- Write header row to CalcData ---
+    outRow = 1
+    calcWS.Cells(outRow, 1) = "COUNTY"
+    calcWS.Cells(outRow, 2) = "DOCKET #"
+    calcWS.Cells(outRow, 3) = "Filed Year"
+    calcWS.Cells(outRow, 4) = "Grdshp Filed"
+    calcWS.Cells(outRow, 5) = "Judgment Date"
+    calcWS.Cells(outRow, 6) = "Days to Disposition"
+    calcWS.Cells(outRow, 7) = "Over 365 Days?"
+    outRow = outRow + 1
+ 
+    ' --- Find last row on CleanData ---
+    lastRow = cleanWS.Cells(cleanWS.Rows.Count, 2).End(xlUp).Row
+ 
+    ' --- Loop through each case on CleanData (Row 2 onward) ---
+    For i = 2 To lastRow
+ 
+        countyVal = Trim(CStr(cleanWS.Cells(i, 1).Value))
+        docketNum = Trim(CStr(cleanWS.Cells(i, 2).Value))
+        judgDate  = cleanWS.Cells(i, 3).Value
+        filedDate = cleanWS.Cells(i, 4).Value
+ 
+        ' Skip if Judgment Date is blank (case still open)
+        If IsEmpty(judgDate) Or judgDate = "" Then GoTo NextCase
+ 
+        ' Skip if Filed Date is blank
+        If IsEmpty(filedDate) Or filedDate = "" Then GoTo NextCase
+ 
+        ' Skip if values are not valid dates
+        If Not IsDate(judgDate) Then GoTo NextCase
+        If Not IsDate(filedDate) Then GoTo NextCase
+ 
+        ' Get the year the complaint was filed
+        filedYear = Year(CDate(filedDate))
+ 
+        ' Only keep cases filed in 2022, 2023, 2024, or 2025
+        If filedYear < 2022 Or filedYear > 2025 Then GoTo NextCase
+ 
+        ' Calculate days: Judgment Date minus Filed Date
+        daysCalc = DateDiff("d", CDate(filedDate), CDate(judgDate))
+ 
+        ' Skip any negative values (data anomalies)
+        If daysCalc < 0 Then GoTo NextCase
+ 
+        ' Write results to CalcData sheet
+        calcWS.Cells(outRow, 1) = countyVal
+        calcWS.Cells(outRow, 2) = docketNum
+        calcWS.Cells(outRow, 3) = filedYear
+        calcWS.Cells(outRow, 4) = filedDate
+        calcWS.Cells(outRow, 5) = judgDate
+        calcWS.Cells(outRow, 6) = daysCalc
+ 
+        ' Flag backlog cases (over 365 days)
+        If daysCalc > 365 Then
+            calcWS.Cells(outRow, 7) = "YES"
+        Else
+            calcWS.Cells(outRow, 7) = "No"
+        End If
+ 
+        outRow = outRow + 1
+ 
+NextCase:
+    Next i
+ 
+    MsgBox "CalcData complete! " & (outRow - 2) & " cases written.", vbInformation
+ 
+End Sub
