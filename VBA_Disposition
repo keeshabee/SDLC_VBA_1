@@ -1,106 +1,100 @@
-' --- Step 4: Calculate days to disposition ---
-    Call CalculateDaysToDisposition()
- 
-    MsgBox "All steps complete! Check CleanData and CalcData sheets.", vbInformation
-
-
 ' =========================================================
-' Sub 3 of 3: Date Calculation & Year Filter
-' Reads CleanData, calculates days to disposition,
-' filters to 2022-2025, flags backlog cases > 365 days
+' Sub 4 of 4: County-Level Summary
+' Groups CalcData by County + Filing Year,
+' calculates average days and backlog count per group
 ' =========================================================
  
-Sub CalculateDaysToDisposition()
+Sub BuildCountySummary()
  
-    ' --- Declare all variables ---
-    Dim cleanWS    As Worksheet
-    Dim calcWS     As Worksheet
-    Dim lastRow    As Long
-    Dim i          As Long
-    Dim outRow     As Long
-    Dim countyVal  As String
-    Dim docketNum  As String
-    Dim judgDate   As Variant
-    Dim filedDate  As Variant
-    Dim daysCalc   As Long
-    Dim filedYear  As Integer
+    Dim calcWS    As Worksheet
+    Dim summWS    As Worksheet
+    Dim lastRow   As Long
+    Dim i         As Long
+    Dim outRow    As Long
+    Dim groupKey  As String
+    Dim county    As String
+    Dim yr        As String
+    Dim daysVal   As Long
+    Dim isOver    As String
  
-    ' --- Point to the CleanData sheet ---
-    Set cleanWS = ThisWorkbook.Sheets("CleanData")
+    Dim dictCount   As Object
+    Dim dictSum     As Object
+    Dim dictBacklog As Object
+    Dim k           As Variant
+    Dim parts()     As String
+    Dim rng         As Range
+
+Set calcWS = ThisWorkbook.Sheets("CalcData")
  
-    ' --- Delete old CalcData sheet and create a fresh one ---
+' --- Delete old CountySummary and create a fresh one ---
     On Error Resume Next
     Application.DisplayAlerts = False
-    ThisWorkbook.Sheets("CalcData").Delete
+    ThisWorkbook.Sheets("CountySummary").Delete
     Application.DisplayAlerts = True
     On Error GoTo 0
-    Set calcWS = ThisWorkbook.Sheets.Add
-    calcWS.Name = "CalcData"
+    Set summWS = ThisWorkbook.Sheets.Add
+    summWS.Name = "CountySummary"
  
-    ' --- Write header row to CalcData ---
-    outRow = 1
-    calcWS.Cells(outRow, 1) = "COUNTY"
-    calcWS.Cells(outRow, 2) = "DOCKET #"
-    calcWS.Cells(outRow, 3) = "Filed Year"
-    calcWS.Cells(outRow, 4) = "Grdshp Filed"
-    calcWS.Cells(outRow, 5) = "Judgment Date"
-    calcWS.Cells(outRow, 6) = "Days to Disposition"
-    calcWS.Cells(outRow, 7) = "Over 365 Days?"
-    outRow = outRow + 1
+    ' --- Initialize all three dictionaries ---
+    Set dictCount   = CreateObject("Scripting.Dictionary")
+    Set dictSum     = CreateObject("Scripting.Dictionary")
+    Set dictBacklog = CreateObject("Scripting.Dictionary")
+lastRow = calcWS.Cells(calcWS.Rows.Count, 1).End(xlUp).Row
  
-    ' --- Find last row on CleanData ---
-    lastRow = cleanWS.Cells(cleanWS.Rows.Count, 2).End(xlUp).Row
- 
-    ' --- Loop through each case on CleanData (Row 2 onward) ---
+    ' --- Loop through CalcData (data starts at row 2, row 1 is header) ---
     For i = 2 To lastRow
  
-        countyVal = Trim(CStr(cleanWS.Cells(i, 1).Value))
-        docketNum = Trim(CStr(cleanWS.Cells(i, 2).Value))
-        judgDate  = cleanWS.Cells(i, 3).Value
-        filedDate = cleanWS.Cells(i, 4).Value
+        county  = Trim(CStr(calcWS.Cells(i, 1).Value))  ' Col A: COUNTY
+        yr      = Trim(CStr(calcWS.Cells(i, 3).Value))  ' Col C: Filed Year
+        daysVal = calcWS.Cells(i, 6).Value         ' Col F: Days to Disposition
+        isOver  = Trim(CStr(calcWS.Cells(i, 7).Value))  ' Col G: Over 365 Days?
  
-        ' Skip if Judgment Date is blank (case still open)
-        If IsEmpty(judgDate) Or judgDate = "" Then GoTo NextCase
+        If county = "" Or yr = "" Then GoTo NextRow
  
-        ' Skip if Filed Date is blank
-        If IsEmpty(filedDate) Or filedDate = "" Then GoTo NextCase
+        groupKey = county & "|" & yr  ' e.g. 'ATL|2023'
  
-        ' Skip if values are not valid dates
-        If Not IsDate(judgDate) Then GoTo NextCase
-        If Not IsDate(filedDate) Then GoTo NextCase
- 
-        ' Get the year the complaint was filed
-        filedYear = Year(CDate(filedDate))
- 
-        ' Only keep cases filed in 2022, 2023, 2024, or 2025
-        If filedYear < 2022 Or filedYear > 2025 Then GoTo NextCase
- 
-        ' Calculate days: Judgment Date minus Filed Date
-        daysCalc = DateDiff("d", CDate(filedDate), CDate(judgDate))
- 
-        ' Skip any negative values (data anomalies)
-        If daysCalc < 0 Then GoTo NextCase
- 
-        ' Write results to CalcData sheet
-        calcWS.Cells(outRow, 1) = countyVal
-        calcWS.Cells(outRow, 2) = docketNum
-        calcWS.Cells(outRow, 3) = filedYear
-        calcWS.Cells(outRow, 4) = filedDate
-        calcWS.Cells(outRow, 5) = judgDate
-        calcWS.Cells(outRow, 6) = daysCalc
- 
-        ' Flag backlog cases (over 365 days)
-        If daysCalc > 365 Then
-            calcWS.Cells(outRow, 7) = "YES"
+        If dictCount.Exists(groupKey) Then
+            dictCount(groupKey) = dictCount(groupKey) + 1
+            dictSum(groupKey) = dictSum(groupKey) + daysVal
         Else
-            calcWS.Cells(outRow, 7) = "No"
+            dictCount.Add groupKey, 1
+            dictSum.Add groupKey, daysVal
+            dictBacklog.Add groupKey, 0
         End If
  
-        outRow = outRow + 1
+        If UCase(isOver) = "YES" Then
+            dictBacklog(groupKey) = dictBacklog(groupKey) + 1
+        End If
  
-NextCase:
+NextRow:
     Next i
+' --- Write header row to CountySummary ---
+    outRow = 1
+    summWS.Cells(outRow, 1) = "COUNTY"
+    summWS.Cells(outRow, 2) = "YEAR"
+    summWS.Cells(outRow, 3) = "Total Cases"
+    summWS.Cells(outRow, 4) = "Avg Days to Disposition"
+    summWS.Cells(outRow, 5) = "Cases Over 365 Days"
+    outRow = 2
  
-    MsgBox "CalcData complete! " & (outRow - 2) & " cases written.", vbInformation
+' --- Write one row per county+year combination ---
+    For Each k In dictCount.Keys
+        parts = Split(k, "|")   ' splits 'MID|2023' into parts(0)='MID' and parts(1)='2023'
+        summWS.Cells(outRow, 1) = parts(0)   ' COUNTY
+        summWS.Cells(outRow, 2) = parts(1)   ' YEAR
+        summWS.Cells(outRow, 3) = dictCount(k)   ' Total Cases
+        summWS.Cells(outRow, 4) = Round(dictSum(k) / dictCount(k), 0)   ' Avg Days
+        summWS.Cells(outRow, 5) = dictBacklog(k)   ' Cases Over 365
+        outRow = outRow + 1
+    Next k
+' --- Sort CountySummary by County A-Z, then Year low to high ---
+    Set rng = summWS.Range("A1").CurrentRegion
+    rng.Sort 
+        Key1:=summWS.Columns(1), Order1:=xlAscending, _
+        Key2:=summWS.Columns(2), Order2:=xlAscending, _
+        Header:=xlYes
+ 
+    MsgBox "CountySummary complete! " & (outRow - 2) & " rows written.", vbInformation
  
 End Sub
+
