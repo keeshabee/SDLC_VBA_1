@@ -1,3 +1,9 @@
+' --- Step 4: Calculate days to disposition ---
+    Call CalculateDaysToDisposition()
+ 
+    MsgBox "All steps complete! Check CleanData and CalcData sheets.", vbInformation
+
+
 ' =========================================================
 ' Sub 3 of 3: Date Calculation & Year Filter
 ' Reads CleanData, calculates days to disposition,
