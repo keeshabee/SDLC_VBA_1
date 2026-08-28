@@ -1,13 +1,575 @@
-Good afternoon, 
+' ========================================================================================
+' Macro 4: Time to Disposition Report
+' Sub 1 of 3: File Picker
+' Lets the user select the Time to Entry file
+' ========================================================================================
 
-Please find attached the Macro: Clearance Rate as revised and now updated with accurate historical data pulls from October 6, 2025 – August 9, 2026.
+Sub RunTimeToDisposition()
 
-Additionally (for GMP Team), there are three graph sheets, with the ability to filter for each county and the State total over time:
-•	Clearance Rate  
-•	Total Completed Reports
-•	Total Uploaded Reports
+' --- Step1: Ask user to selct the source file ---
+Dim sourceFile As String
+sourceFile = Application.GetOpenFilename( _
+    FileFilter:="Excel Files (*.xlsx;*.xlsm;*.xls), *.xlsx;*.xlsm;*.xls", _
+    Title:="Select the Time to Entry File")
+    
+' --- Step 2: Exit if user clicked Cancel ---
+If sourceFile = "False" Then
+    MsgBox "No file selected. Macro cancelled.", vbInformation
+    Exit Sub
+End If
 
-For the GMP Team, this is saved in the path:
-"S:\3 - PROBATE PART\1 GUARDIANSHIP MONITORING\OPERATIONS MANAGEMENT\MACRO_ Clearance_Rate_Rev_.08.10.2026.xlsm"
+' --- Step 3: Call the deduplication routine ---
+Call DeduplicationCases(sourceFile)
 
-@Keisha Bolaji, would you kindly upload this version to the SharePoint site as the up to date version (so we have the historical data in)?  Thank you in advance.
+' --- Step 4: Calculate days to disposition ---
+Call CalculateDaysToDisposition
+    
+' --- Step 5: Build county-level summary ---
+Call BuildCountySummary
+
+' --- Step 6: Apply color coding ---
+    Call ApplyColorCoding
+
+' --- Step 7: Build statewide year-over-year summary ---
+    Call BuildStatewideSummary
+
+' --- Step 8: Build the statewide bar chart ---
+    Call BuildStatewideChart
+
+MsgBox "All steps complete!  [VERSION 3 - includes statewide chart]" & vbCrLf & vbCrLf & _
+       "Check CleanData, CalcData, CountySummary and Statewide sheets.", vbInformation
+
+End Sub
+
+' =======================================================================================
+' Sub 2 of 3: Deduplication
+' Reads the source file, keeps one row per docket number,
+' writes clean results to a sheet called CleanData
+' =======================================================================================
+
+Sub DeduplicationCases(sourceFilePath As String)
+
+    ' --- Declare variable ---
+    Dim srcWB       As Workbook
+    Dim srcWS       As Worksheet
+    Dim outWS       As Worksheet
+    Dim dict        As Object
+    Dim lastRow     As Long
+    Dim i           As Long
+    Dim outRow      As Long
+    Dim docketNum   As String
+    Dim countyVal   As String
+    Dim judgDate    As Variant
+    Dim filedDate   As Variant
+    Dim caseStatus  As String
+    Dim caseType    As String
+    
+    ' --- Open the source file (hidden, no screen flicker) ---
+    Application.ScreenUpdating = False
+    Set srcWB = Workbooks.Open(sourceFilePath)
+    Set srcWS = srcWB.Sheets("Sheet1")
+    
+    ' --- Find the last row with data in Column B (Docket #) ---
+    lastRow = srcWS.Cells(srcWS.Rows.Count, 2).End(xlUp).Row
+    
+    ' --- Set up output sheet in THIS workbook ---
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    ThisWorkbook.Sheets("CleanData").Delete
+Application.DisplayAlerts = True
+On Error GoTo 0
+Set outWS = ThisWorkbook.Sheets.Add
+outWS.Name = "CleanData"
+
+' --- Write header row to output sheet ---
+outRow = 1
+outWS.Cells(outRow, 1) = "COUNTY"
+outWS.Cells(outRow, 2) = "DOCKET #"
+outWS.Cells(outRow, 3) = "Judgment Date"
+outWS.Cells(outRow, 4) = "Grdshp Filed"
+outWS.Cells(outRow, 5) = "Case Status"
+outWS.Cells(outRow, 6) = "Case Type"
+outRow = outRow + 1
+
+' --- Create the Dictionary to track docket numbers seen ---
+Set dict = CreateObject("Scripting.Dictionary")
+dict.CompareMode = vbTextCompare ' ignore case differences
+
+' --- Loop through every data row (start at Row 3, skip 2 headers) ---
+For i = 3 To lastRow
+
+' Read the values from this row
+docketNum = Trim(CStr(srcWS.Cells(i, 2).Value))
+countyVal = Trim(CStr(srcWS.Cells(i, 1).Value))
+judgDate = srcWS.Cells(i, 3).Value
+filedDate = srcWS.Cells(i, 4).Value
+caseStatus = Trim(CStr(srcWS.Cells(i, 5).Value))
+caseType = Trim(CStr(srcWS.Cells(i, 6).Value))
+
+' Skip blank docket numbers
+If docketNum = "" Then GoTo NextRow
+
+' If we have NOT seen this docket number before, keep this row
+If Not dict.Exists(docketNum) Then
+dict.Add docketNum, True
+outWS.Cells(outRow, 1) = countyVal
+outWS.Cells(outRow, 2) = docketNum
+outWS.Cells(outRow, 3) = judgDate
+outWS.Cells(outRow, 4) = filedDate
+outWS.Cells(outRow, 5) = caseStatus
+outWS.Cells(outRow, 6) = caseType
+outRow = outRow + 1
+End If
+
+NextRow:
+Next i
+
+' --- Close source file without saving ---
+srcWB.Close SaveChanges:=False
+Application.ScreenUpdating = True
+
+End Sub
+
+' =========================================================
+' Sub 3 of 3: Date Calculation & Year Filter
+' Reads CleanData, calculates days to disposition,
+' filters to 2022-2025, flags backlog cases > 365 days
+' =========================================================
+ 
+Sub CalculateDaysToDisposition()
+ 
+    ' --- Declare all variables ---
+    Dim cleanWS    As Worksheet
+    Dim calcWS     As Worksheet
+    Dim lastRow    As Long
+    Dim i          As Long
+    Dim outRow     As Long
+    Dim countyVal  As String
+    Dim docketNum  As String
+    Dim judgDate   As Variant
+    Dim filedDate  As Variant
+    Dim daysCalc   As Long
+    Dim filedYear  As Integer
+ 
+    ' --- Point to the CleanData sheet ---
+    Set cleanWS = ThisWorkbook.Sheets("CleanData")
+ 
+    ' --- Delete old CalcData sheet and create a fresh one ---
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    ThisWorkbook.Sheets("CalcData").Delete
+    Application.DisplayAlerts = True
+    On Error GoTo 0
+    Set calcWS = ThisWorkbook.Sheets.Add
+    calcWS.Name = "CalcData"
+ 
+    ' --- Write header row to CalcData ---
+    outRow = 1
+    calcWS.Cells(outRow, 1) = "COUNTY"
+    calcWS.Cells(outRow, 2) = "DOCKET #"
+    calcWS.Cells(outRow, 3) = "Filed Year"
+    calcWS.Cells(outRow, 4) = "Grdshp Filed"
+    calcWS.Cells(outRow, 5) = "Judgment Date"
+    calcWS.Cells(outRow, 6) = "Days to Disposition"
+    calcWS.Cells(outRow, 7) = "Over 365 Days?"
+    outRow = outRow + 1
+ 
+    ' --- Find last row on CleanData ---
+    lastRow = cleanWS.Cells(cleanWS.Rows.Count, 2).End(xlUp).Row
+ 
+    ' --- Loop through each case on CleanData (Row 2 onward) ---
+    For i = 2 To lastRow
+ 
+        countyVal = Trim(CStr(cleanWS.Cells(i, 1).Value))
+        docketNum = Trim(CStr(cleanWS.Cells(i, 2).Value))
+        judgDate = cleanWS.Cells(i, 3).Value
+        filedDate = cleanWS.Cells(i, 4).Value
+ 
+        ' Skip if Judgment Date is blank (case still open)
+        If IsEmpty(judgDate) Or judgDate = "" Then GoTo NextCase
+ 
+        ' Skip if Filed Date is blank
+        If IsEmpty(filedDate) Or filedDate = "" Then GoTo NextCase
+ 
+        ' Skip if values are not valid dates
+        If Not IsDate(judgDate) Then GoTo NextCase
+        If Not IsDate(filedDate) Then GoTo NextCase
+ 
+        ' Get the year the complaint was filed
+        filedYear = Year(CDate(filedDate))
+ 
+        ' Only keep cases filed in 2022, 2023, 2024, 2025, or 2026
+        If filedYear < 2022 Or filedYear > 2026 Then GoTo NextCase
+ 
+        ' Calculate days: Judgment Date minus Filed Date
+        daysCalc = DateDiff("d", CDate(filedDate), CDate(judgDate))
+ 
+        ' Skip any negative values (data anomalies)
+        If daysCalc < 0 Then GoTo NextCase
+ 
+        ' Write results to CalcData sheet
+        calcWS.Cells(outRow, 1) = countyVal
+        calcWS.Cells(outRow, 2) = docketNum
+        calcWS.Cells(outRow, 3) = filedYear
+        calcWS.Cells(outRow, 4) = filedDate
+        calcWS.Cells(outRow, 5) = judgDate
+        calcWS.Cells(outRow, 6) = daysCalc
+ 
+        ' Flag backlog cases (over 365 days)
+        If daysCalc > 365 Then
+            calcWS.Cells(outRow, 7) = "YES"
+        Else
+            calcWS.Cells(outRow, 7) = "No"
+        End If
+ 
+        outRow = outRow + 1
+ 
+NextCase:
+    Next i
+ 
+    MsgBox "CalcData complete! " & (outRow - 2) & " cases written.", vbInformation
+ 
+End Sub
+
+' =========================================================
+' Sub 4 of 5: County-Level Summary
+' Groups CalcData by County + Filing Year,
+' calculates average days, backlog count, and % over 365
+' =========================================================
+
+Sub BuildCountySummary()
+
+    Dim calcWS    As Worksheet
+    Dim summWS    As Worksheet
+    Dim lastRow   As Long
+    Dim i         As Long
+    Dim outRow    As Long
+    Dim groupKey  As String
+    Dim county    As String
+    Dim yr        As String
+    Dim daysVal   As Long
+    Dim isOver    As String
+    Dim pctOver   As Double
+
+    Dim dictCount   As Object
+    Dim dictSum     As Object
+    Dim dictBacklog As Object
+    Dim k           As Variant
+    Dim parts()     As String
+    Dim rng         As Range
+
+Set calcWS = ThisWorkbook.Sheets("CalcData")
+
+' --- Delete old CountySummary and create a fresh one ---
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    ThisWorkbook.Sheets("CountySummary").Delete
+    Application.DisplayAlerts = True
+    On Error GoTo 0
+    Set summWS = ThisWorkbook.Sheets.Add
+    summWS.Name = "CountySummary"
+
+    ' --- Initialize all three dictionaries ---
+    Set dictCount = CreateObject("Scripting.Dictionary")
+    Set dictSum = CreateObject("Scripting.Dictionary")
+    Set dictBacklog = CreateObject("Scripting.Dictionary")
+lastRow = calcWS.Cells(calcWS.Rows.Count, 1).End(xlUp).Row
+
+    ' --- Loop through CalcData (data starts at row 2, row 1 is header) ---
+    For i = 2 To lastRow
+
+        county = Trim(CStr(calcWS.Cells(i, 1).Value))    ' Col A: COUNTY
+        yr = Trim(CStr(calcWS.Cells(i, 3).Value))        ' Col C: Filed Year
+        daysVal = calcWS.Cells(i, 6).Value                ' Col F: Days to Disposition
+        isOver = Trim(CStr(calcWS.Cells(i, 7).Value))    ' Col G: Over 365 Days?
+
+        If county = "" Or yr = "" Then GoTo NextRow
+
+        groupKey = county & "|" & yr   ' e.g. "ATL|2023"
+
+        If dictCount.Exists(groupKey) Then
+            dictCount(groupKey) = dictCount(groupKey) + 1
+            dictSum(groupKey) = dictSum(groupKey) + daysVal
+        Else
+            dictCount.Add groupKey, 1
+            dictSum.Add groupKey, daysVal
+            dictBacklog.Add groupKey, 0
+        End If
+
+        If UCase(isOver) = "YES" Then
+            dictBacklog(groupKey) = dictBacklog(groupKey) + 1
+        End If
+
+NextRow:
+    Next i
+' --- Write header row to CountySummary ---
+    outRow = 1
+    summWS.Cells(outRow, 1) = "COUNTY"
+    summWS.Cells(outRow, 2) = "YEAR"
+    summWS.Cells(outRow, 3) = "Total Cases"
+    summWS.Cells(outRow, 4) = "Avg Days to Disposition"
+    summWS.Cells(outRow, 5) = "Cases Over 365 Days"
+    summWS.Cells(outRow, 6) = "% of cases"
+    outRow = 2
+
+' --- Write one row per county+year combination ---
+    For Each k In dictCount.Keys
+        parts = Split(k, "|")
+        pctOver = Round((dictBacklog(k) / dictCount(k)) * 100, 1)
+
+        summWS.Cells(outRow, 1) = parts(0)                                    ' COUNTY
+        summWS.Cells(outRow, 2) = parts(1)                                    ' YEAR
+        summWS.Cells(outRow, 3) = dictCount(k)                                ' Total Cases
+        summWS.Cells(outRow, 4) = Round(dictSum(k) / dictCount(k), 0)         ' Avg Days
+        summWS.Cells(outRow, 5) = dictBacklog(k)                              ' Cases Over 365
+        summWS.Cells(outRow, 6) = pctOver                                     ' % Over 365
+        outRow = outRow + 1
+    Next k
+
+    ' --- Format Column F as a number with 1 decimal place ---
+    summWS.Columns(6).NumberFormat = "0.0"
+
+' --- Sort CountySummary by County A-Z, then Year low to high ---
+    Set rng = summWS.Range("A1").CurrentRegion
+    rng.Sort _
+        Key1:=summWS.Columns(1), Order1:=xlAscending, _
+        Key2:=summWS.Columns(2), Order2:=xlAscending, _
+        Header:=xlYes
+
+    MsgBox "CountySummary complete! " & (outRow - 2) & " rows written.", vbInformation
+
+End Sub
+' =========================================================
+' Sub 5 of 5: Color Coding
+' Colors Column D (Avg Days) with green/yellow thresholds
+' Colors Column F (% Over 365) red if >= 4.0%
+' Individual cell coloring only -- no full-row highlighting
+' =========================================================
+
+Sub ApplyColorCoding()
+
+    Dim summWS   As Worksheet
+    Dim lastRow  As Long
+    Dim i        As Long
+    Dim avgDays  As Long
+    Dim pctOver  As Double
+
+    ' --- Thresholds confirmed by GMS team ---
+    Const GREEN_MAX  As Long = 120      ' <= 120 days  --> Green
+    Const YELLOW_MAX As Long = 365      ' 121-365 days --> Yellow  |  > 365 --> Red
+    Const PCT_RED    As Double = 3.9    ' > 3.9%       --> Red in column F
+
+    Set summWS = ThisWorkbook.Sheets("CountySummary")
+    lastRow = summWS.Cells(summWS.Rows.Count, 1).End(xlUp).Row
+
+    ' --- Clear any existing fill and font colors from columns A through F ---
+    summWS.Range("A2:F" & lastRow).Interior.ColorIndex = xlNone
+    summWS.Range("A2:F" & lastRow).Font.ColorIndex = xlAutomatic
+
+    ' --- Loop through every data row (row 2 onward, row 1 is header) ---
+    For i = 2 To lastRow
+
+        avgDays = summWS.Cells(i, 4).Value   ' Col D: Avg Days to Disposition
+        pctOver = summWS.Cells(i, 6).Value   ' Col F: % Over 365 Days
+
+        ' --- Color Column D cell only ---
+        If avgDays <= GREEN_MAX Then
+            summWS.Cells(i, 4).Interior.Color = RGB(226, 239, 218)   ' Green
+        ElseIf avgDays <= YELLOW_MAX Then
+            summWS.Cells(i, 4).Interior.Color = RGB(255, 242, 204)   ' Yellow
+        Else
+            summWS.Cells(i, 4).Interior.Color = RGB(252, 228, 214)   ' Red
+        End If
+
+        ' --- Color Column F red if percentage is over 3.9% ---
+        If pctOver > PCT_RED Then
+            summWS.Cells(i, 6).Interior.Color = RGB(255, 199, 206)   ' Fill  #FFC7CE
+            summWS.Cells(i, 6).Font.Color = RGB(156, 0, 6)           ' Font  #9C0006
+        End If
+
+    Next i
+
+    MsgBox "Color coding applied to CountySummary!", vbInformation
+
+End Sub
+
+' =========================================================
+' Sub 6 of 7: Statewide Year-Over-Year Summary
+' Rolls CalcData up to one row per filing year (all counties
+' combined) so the chart has a statewide series to plot.
+' NOTE: the average is calculated from the raw case data,
+' not by averaging the county averages, which would be wrong
+' because counties have very different case volumes.
+' =========================================================
+
+Sub BuildStatewideSummary()
+
+    Dim calcWS    As Worksheet
+    Dim stateWS   As Worksheet
+    Dim lastRow   As Long
+    Dim i         As Long
+    Dim outRow    As Long
+    Dim yr        As Integer
+    Dim minYr     As Integer
+    Dim maxYr     As Integer
+    Dim idx       As Integer
+    Dim daysVal   As Long
+    Dim isOver    As String
+    Dim pctOver   As Double
+
+    Dim totCases() As Long
+    Dim totDays()  As Double
+    Dim totBack()  As Long
+
+    Set calcWS = ThisWorkbook.Sheets("CalcData")
+    lastRow = calcWS.Cells(calcWS.Rows.Count, 1).End(xlUp).Row
+
+    ' --- First pass: find the earliest and latest filing year present ---
+    minYr = 9999
+    maxYr = 0
+    For i = 2 To lastRow
+        If IsNumeric(calcWS.Cells(i, 3).Value) Then
+            yr = CInt(calcWS.Cells(i, 3).Value)
+            If yr < minYr Then minYr = yr
+            If yr > maxYr Then maxYr = yr
+        End If
+    Next i
+
+    If maxYr = 0 Then
+        MsgBox "No data found on CalcData. Statewide summary skipped.", vbExclamation
+        Exit Sub
+    End If
+
+    ' --- Size the running totals to the year range we actually found ---
+    ReDim totCases(0 To maxYr - minYr)
+    ReDim totDays(0 To maxYr - minYr)
+    ReDim totBack(0 To maxYr - minYr)
+
+    ' --- Second pass: accumulate cases, days and backlog per year ---
+    For i = 2 To lastRow
+        If IsNumeric(calcWS.Cells(i, 3).Value) Then
+            yr = CInt(calcWS.Cells(i, 3).Value)
+            idx = yr - minYr
+            daysVal = calcWS.Cells(i, 6).Value
+            isOver = Trim(CStr(calcWS.Cells(i, 7).Value))
+
+            totCases(idx) = totCases(idx) + 1
+            totDays(idx) = totDays(idx) + daysVal
+            If UCase(isOver) = "YES" Then totBack(idx) = totBack(idx) + 1
+        End If
+    Next i
+
+    ' --- Delete old Statewide sheet and create a fresh one ---
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    ThisWorkbook.Sheets("Statewide").Delete
+    Application.DisplayAlerts = True
+    On Error GoTo 0
+    Set stateWS = ThisWorkbook.Sheets.Add
+    stateWS.Name = "Statewide"
+
+    ' --- Header row ---
+    stateWS.Cells(1, 1) = "YEAR"
+    stateWS.Cells(1, 2) = "Total Cases"
+    stateWS.Cells(1, 3) = "Avg Days to Disposition"
+    stateWS.Cells(1, 4) = "Cases Over 365 Days"
+    stateWS.Cells(1, 5) = "% of cases"
+    stateWS.Rows(1).Font.Bold = True
+
+    ' --- One row per year, oldest first ---
+    outRow = 2
+    For idx = 0 To maxYr - minYr
+        If totCases(idx) > 0 Then
+            pctOver = Round((totBack(idx) / totCases(idx)) * 100, 1)
+
+            stateWS.Cells(outRow, 1) = minYr + idx
+            stateWS.Cells(outRow, 2) = totCases(idx)
+            stateWS.Cells(outRow, 3) = Round(totDays(idx) / totCases(idx), 0)
+            stateWS.Cells(outRow, 4) = totBack(idx)
+            stateWS.Cells(outRow, 5) = pctOver
+            outRow = outRow + 1
+        End If
+    Next idx
+
+    stateWS.Columns(5).NumberFormat = "0.0"
+    stateWS.Columns("A:E").AutoFit
+
+End Sub
+
+
+' =========================================================
+' Sub 7 of 7: Statewide Bar Chart
+' Plots average days to disposition by filing year.
+' The value axis is pinned to zero so the size of each bar
+' is proportional to the actual number, which is the issue
+' Matthew flagged with the October 2024 CJ Update chart.
+' =========================================================
+
+Sub BuildStatewideChart()
+
+    Dim stateWS  As Worksheet
+    Dim lastRow  As Long
+    Dim cht      As ChartObject
+    Dim co       As ChartObject
+
+    Set stateWS = ThisWorkbook.Sheets("Statewide")
+    lastRow = stateWS.Cells(stateWS.Rows.Count, 1).End(xlUp).Row
+
+    If lastRow < 2 Then
+        MsgBox "No statewide data to chart.", vbExclamation
+        Exit Sub
+    End If
+
+    ' --- Remove any existing chart so repeat runs do not stack them up ---
+    For Each co In stateWS.ChartObjects
+        co.Delete
+    Next co
+
+    ' --- Create the chart to the right of the data ---
+    Set cht = stateWS.ChartObjects.Add(Left:=380, Top:=20, Width:=520, Height:=320)
+
+    With cht.Chart
+        .ChartType = xlColumnClustered
+
+        ' --- Build the series explicitly so Excel cannot mistake ---
+        ' --- the YEAR column for a data series ---
+        Do While .SeriesCollection.Count > 0
+            .SeriesCollection(1).Delete
+        Loop
+        .SeriesCollection.NewSeries
+        .SeriesCollection(1).Name = "Avg Days to Disposition"
+        .SeriesCollection(1).Values = stateWS.Range("C2:C" & lastRow)
+        .SeriesCollection(1).XValues = stateWS.Range("A2:A" & lastRow)
+
+        .HasLegend = False
+        .HasTitle = True
+        .ChartTitle.Text = "Statewide Average Days to Disposition by Filing Year"
+        .ChartTitle.Font.Size = 12
+        .ChartTitle.Font.Bold = True
+
+        ' --- Value axis starts at zero ---
+        With .Axes(xlValue)
+            .MinimumScale = 0
+            .HasTitle = True
+            .AxisTitle.Text = "Average Days"
+            .AxisTitle.Font.Size = 10
+        End With
+
+        With .Axes(xlCategory)
+            .HasTitle = True
+            .AxisTitle.Text = "Filing Year"
+            .AxisTitle.Font.Size = 10
+        End With
+
+        ' --- Solid blue bars with the value printed on each one ---
+        With .SeriesCollection(1)
+            .Format.Fill.ForeColor.RGB = RGB(46, 117, 182)
+            .HasDataLabels = True
+            .DataLabels.Font.Size = 9
+        End With
+    End With
+
+    stateWS.Range("A1").Select
+
+End Sub
+
