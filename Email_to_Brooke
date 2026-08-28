@@ -1,0 +1,24 @@
+**Subject:** Time to Disposition Macro and SharePoint Update
+
+Hi Brooke,
+
+The Time to Disposition macro is ready.
+
+To run it:
+
+1. Open the workbook and click Enable Content if a yellow bar appears
+2. On the first tab, click the Run Report button
+3. When the file browser opens, select the Time to Entry file and click Open
+
+That is it. The macro fills in the CountySummary and Statewide tabs on its own, including the year over year chart.
+
+One note: you do not need to paste anything into the reference tab. The macro does not read from it. Selecting the file in step 3 is the only way data comes in.
+
+I also uploaded the updated clearance rate file to SharePoint, current as of August 10, 2026:
+
+[ SharePoint link ]
+
+Happy to walk through it on a call anytime.
+
+Thanks,
+Keisha
